@@ -5,8 +5,11 @@ RUN apt-get update && \
     add-apt-repository ppa:deadsnakes/ppa
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential python3 python3-dev python3-pip libpq-dev
 
-WORKDIR /app
-COPY . /app
+WORKDIR /
+COPY . /
+
+VOLUME [/config]
+VOLUME [/db-data]
 
 RUN pip3 install -r requirements.txt
 

@@ -1,3 +1,9 @@
 {
-    "token": "your bot token"
+    "token": "your bot token",
+    "database": {
+        "host": "weeb-db",
+        "user": "eris",
+        "password": "password",
+        "database": "accountability"
+    }
 }

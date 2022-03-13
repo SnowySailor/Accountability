@@ -1,6 +1,6 @@
 import json
 
-def get_multi_level_value(d: dict|list, *keys: any, **kwargs: any):
+def get_multi_level_value(d, *keys: any, **kwargs: any):
     default = get_value(kwargs, 'default')
 
     depth = len(keys)
@@ -11,7 +11,7 @@ def get_multi_level_value(d: dict|list, *keys: any, **kwargs: any):
             return default
     return d
 
-def get_value(d: dict|list, key: any, default: any = None):
+def get_value(d, key: any, default: any = None):
     try:
         return d[key]
     except:
@@ -20,6 +20,6 @@ def get_value(d: dict|list, key: any, default: any = None):
 def get_config(*keys: str, **kwargs: any):
     default = get_value(kwargs, 'default')
 
-    with open('config.json', 'r') as f:
+    with open('./config/config.json', 'r') as f:
         config = json.loads(f.read())
         return get_multi_level_value(config, *keys, **kwargs)

@@ -1,11 +1,18 @@
 import discord
 from discord.ext import commands
 import random
+import logging
 
 # from database import get_cursor, init_db
 from utils import get_config
 from sync import get_lock
 import logs
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -16,8 +23,13 @@ bot = commands.Bot(command_prefix=';', intents=intents)
 @bot.event
 async def on_ready():
     # init_db()
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('------')
+    logger.debug(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    logger.debug('------')
+
+@bot.command()
+async def ping(ctx, *msg: str):
+    resp = ' '.join(msg)
+    await ctx.send(resp)
 
 @bot.command()
 async def log(ctx, *log_words: str):
@@ -25,6 +37,7 @@ async def log(ctx, *log_words: str):
     user_id = ctx.author.id
     with get_lock('{user_id}:logs'):
         logs.create_log_for_user(user_id, log)
+    await ctx.send('here')
     await ctx.send('Logged activity for {ctx.author.mention}')
 
 @bot.command()

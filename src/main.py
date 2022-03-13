@@ -4,21 +4,12 @@ import random
 import logging
 import sys
 import traceback
+import user
 
 from database import get_cursor, init_db
-from utils import get_config
+from utils import get_config, LoggerWriter
 from sync import get_lock
 import logs
-
-class LoggerWriter:
-    def __init__(self, level):
-        self.level = level
-
-    def write(self, message):
-        self.level(message)
-
-    def flush(self):
-        self.level(sys.stderr)
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -55,9 +46,9 @@ async def log(ctx, *log_words: str):
 @bot.command()
 async def rmlog(ctx, index: int):
     user_id = ctx.author.id
-    today = get_current_day_for_user(user_id)
-    async with get_lock(f'{user_id}:logs'):
-        logs_today = logs.get_logs_for_user_for_specific_day(user_id, today)
+    time = user.get_current_time_for_user(user_id)
+    with get_lock(f'{user_id}:logs'):
+        logs_today = logs.get_logs_for_user_for_specific_day(user_id, time.date())
         if len(logs_today) <= index:
             await ctx.send(f'{ctx.author.mention} Could not find log with that index')
             return

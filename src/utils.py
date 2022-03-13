@@ -1,4 +1,15 @@
 import json
+import sys
+
+class LoggerWriter:
+    def __init__(self, level):
+        self.level = level
+
+    def write(self, message):
+        self.level(message)
+
+    def flush(self):
+        self.level(sys.stderr)
 
 def get_multi_level_value(d, *keys: any, **kwargs: any):
     default = get_value(kwargs, 'default')

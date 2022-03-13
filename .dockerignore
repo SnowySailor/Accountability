@@ -1,2 +1,6 @@
 config.json
 .env.postgres
+*.log
+Dockerfile
+docker-copmose.yml
+__pycache__

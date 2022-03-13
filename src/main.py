@@ -5,7 +5,7 @@ import logging
 import sys
 import traceback
 
-# from database import get_cursor, init_db
+from database import get_cursor, init_db
 from utils import get_config
 from sync import get_lock
 import logs
@@ -35,7 +35,7 @@ bot = commands.Bot(command_prefix=';', intents=intents)
 
 @bot.event
 async def on_ready():
-    # init_db()
+    init_db()
     logger.debug(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logger.debug('------')
 

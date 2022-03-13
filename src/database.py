@@ -11,11 +11,11 @@ def init_db():
     global pool
     try:
         pool = psycopg2.pool.ThreadedConnectionPool(1, 2000,
-            host = get_config('DATABASE_HOST'),
-            dbname = get_config('DATABASE_NAME'),
-            user = get_config('DATABASE_USER'),
-            password = get_config('DATABASE_PASSWORD'),
-            port = get_config('DATABASE_PORT', 5432),
+            host = get_config('database', 'host'),
+            dbname = get_config('database', 'database'),
+            user = get_config('database', 'user'),
+            password = get_config('database', 'password'),
+            port = get_config('database', 'host', default=5432),
             cursor_factory = RealDictCursor
         )
     except Exception as error:

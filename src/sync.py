@@ -1,16 +1,22 @@
 import asyncio
+from contextlib import contextmanager
 
 locks = {}
 creation_lock = asyncio.Lock()
 
+@contextmanager
 def get_lock(key):
     global locks
     if key in locks:
-        return locks[key]
-    with creation_lock:
+        yield locks[key]
+        return
+
+    with (yield from creation_lock):
         if key in locks:
             # Lock was created right after we checked the first time (should almost never happen)
-            return locks[key]
+            yield locks[key]
+            return
+
         lock = asyncio.Lock()
         locks[key] = lock
-        return lock
+        yield lock

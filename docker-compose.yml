@@ -8,8 +8,6 @@ services:
       - ./config/.env.postgres
     volumes:
       - db-data:/var/lib/postgresql/data/
-    ports:
-      - 5434:5432
     restart: unless-stopped
 
   weeb-app:

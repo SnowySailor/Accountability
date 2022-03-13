@@ -4,12 +4,12 @@ import random
 import logging
 import sys
 import traceback
-import user
 
-from database import get_cursor, init_db
-from utils import get_config, LoggerWriter
-from sync import get_lock
-import logs
+from src.utils.utils import get_config, LoggerWriter
+from src.internals.database import init_db, run_migrations
+from src.internals.sync import get_lock
+import src.lib.logs
+import src.lib.user
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -26,6 +26,7 @@ bot = commands.Bot(command_prefix=';', intents=intents)
 
 @bot.event
 async def on_ready():
+    run_migrations()
     init_db()
     logger.debug(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logger.debug('------')
@@ -64,4 +65,5 @@ async def on_command_error(ctx, err):
             logger.exception("{}: {}".format(traceback.tb_frame.f_code.co_filename,traceback.tb_lineno))
             traceback = traceback.tb_next
 
-bot.run(get_config('token'))
+def run_bot():
+    bot.run(get_config('token'))

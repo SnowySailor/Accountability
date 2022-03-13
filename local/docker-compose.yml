@@ -5,24 +5,25 @@ services:
     image: healthcheck/postgres
     container_name: weeb-db
     env_file:
-      - ./config/.env.postgres
+      - ../config/.env.postgres
     volumes:
-      - db-data:/var/lib/postgresql/data/
+      - weeb-db-data:/var/lib/postgresql/data/
     ports:
-      - 0.0.0.0:5434:5432
+      - 50000:5432
     restart: unless-stopped
 
   weeb-app:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
-    image: snowsailor/test:latest
     container_name: weeb-app
     restart: unless-stopped
     depends_on:
       weeb-db:
         condition: service_healthy
+    volumes:
+      - ..:/app
 
 volumes:
-  db-data:
+  weeb-db-data:
     driver: local

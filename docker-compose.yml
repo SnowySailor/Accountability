@@ -16,6 +16,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: snowsailor/test:latest
     container_name: weeb-app
     restart: unless-stopped
     depends_on:

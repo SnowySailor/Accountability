@@ -11,18 +11,14 @@ pool = None
 
 def init_db():
     global pool
-    try:
-        pool = psycopg2.pool.ThreadedConnectionPool(1, 2000,
-            host = get_config('database', 'host'),
-            dbname = get_config('database', 'database'),
-            user = get_config('database', 'user'),
-            password = get_config('database', 'password'),
-            port = get_config('database', 'port', default=5432),
-            cursor_factory = RealDictCursor
-        )
-    except Exception as error:
-        print("Failed to connect to the database: ", error)
-        raise
+    pool = psycopg2.pool.ThreadedConnectionPool(1, 2000,
+        host = get_config('database', 'host'),
+        dbname = get_config('database', 'database'),
+        user = get_config('database', 'user'),
+        password = get_config('database', 'password'),
+        port = get_config('database', 'port', default=5432),
+        cursor_factory = RealDictCursor
+    )
 
 @contextmanager
 def get_conn(key: str = None):

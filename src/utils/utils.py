@@ -2,10 +2,10 @@ import json
 import sys
 
 class LoggerWriter:
-    def __init__(self, level):
+    def __init__(self, level: str):
         self.level = level
 
-    def write(self, message):
+    def write(self, message: str):
         self.level(message)
 
     def flush(self):

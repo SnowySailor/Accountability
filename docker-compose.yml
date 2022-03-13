@@ -9,7 +9,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data/
     ports:
-      - 0.0.0.0:5434:5432
+      - 5434:5432
     restart: unless-stopped
 
   weeb-app:
@@ -22,6 +22,8 @@ services:
     depends_on:
       weeb-db:
         condition: service_healthy
+    volumes:
+      - .:/app
 
 volumes:
   db-data:

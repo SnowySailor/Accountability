@@ -64,13 +64,17 @@ async def show(ctx):
     user_id = ctx.author.id
     server_id = ctx.guild.id
     activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
+
+    description = ''
     if len(activities_today) == 0:
-        await ctx.send(f'{ctx.author.mention} You have no activities logged today')
-    else:
-        string = ''
-        for act in activities_today:
-            string += act.activity + '\n\n'
-        await ctx.send(f'{ctx.author.mention}\'s activies today:\n{string}')
+        description = 'No activities logged today'
+
+    embed = discord.Embed(title=f'{ctx.author}\'s Activities Today', description=description, color=0xFF5733)
+    embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+    for idx, act in enumerate(activities_today):
+        escaped_activity = discord.utils.escape_mentions(act.activity)
+        embed.add_field(name=f'Activity {idx}', value=escaped_activity, inline=False)
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def settz(ctx, timezone: str):

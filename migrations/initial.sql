@@ -3,7 +3,7 @@ CREATE TABLE activity (
     server_id varchar NOT NULL,
     activity varchar(2000) NULL,
     created_at timestamp NOT NULL DEFAULT (now() at time zone 'utc'),
-    PRIMARY KEY (user_id, server_id),
+    PRIMARY KEY (user_id, server_id)
 );
 CREATE INDEX ON activity (user_id, server_id, created_at);
 

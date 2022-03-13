@@ -13,7 +13,7 @@ import src.lib.user
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
-sys.stderr = LoggerWriter(logger.warning)
+sys.stderr = LoggerWriter(logger.error)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -58,12 +58,17 @@ async def rmlog(ctx, index: int):
 
 @bot.event
 async def on_command_error(ctx, err):
-    if isinstance(err, commands.CommandInvokeError):
-        logger.exception(err.__cause__)
-        traceback = err.__cause__.__traceback__
-        while traceback:
-            logger.exception("{}: {}".format(traceback.tb_frame.f_code.co_filename,traceback.tb_lineno))
-            traceback = traceback.tb_next
+    err = getattr(err, 'original', err)
+    lines = ''.join(traceback.format_exception(err.__class__, err, err.__traceback__))
+    lines = f'Ignoring exception in command {ctx.command}:\n{lines}'
+    logger.exception(lines)
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    s = traceback.format_exc()
+    content = f'Ignoring exception in {event}\n{s}'
+    # print(content, file=sys.stderr)
+    logger.error(content)
 
 def run_bot():
     bot.run(get_config('token'))

@@ -21,7 +21,7 @@ def init_db():
             cursor_factory = RealDictCursor
         )
     except Exception as error:
-        logging.exception("Failed to connect to the database: ", error)
+        print("Failed to connect to the database: ", error)
         raise
 
 @contextmanager

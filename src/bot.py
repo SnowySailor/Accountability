@@ -37,7 +37,7 @@ async def log(ctx, *message_words: str):
     message = ' '.join(message_words)
     user_id = ctx.author.id
     server_id = ctx.guild.id
-    with get_lock(f'{user_id}:activities'):
+    with get_lock(f'{user_id}:{server_id}:activities'):
         activity.log_activity_for_user(user_id, server_id, message)
     await ctx.send(f'Logged activity for {ctx.author.mention}')
 
@@ -45,9 +45,8 @@ async def log(ctx, *message_words: str):
 async def rmlog(ctx, index: int):
     user_id = ctx.author.id
     server_id = ctx.guild.id
-    lock_key = f'{user_id}:activities'
-    l = is_locked(lock_key)
-    if l:
+    lock_key = f'{user_id}:{server_id}:activities'
+    if is_locked(lock_key):
         await ctx.send(f'{ctx.author.mention} somehow you hit a race condition. Nothing has been removed.')
         return
 

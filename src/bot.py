@@ -33,12 +33,17 @@ async def ping(ctx, *msg: str):
     await ctx.send(resp)
 
 @bot.command()
-async def log(ctx, *message_words: str):
-    message = ' '.join(message_words)
+async def log(ctx, *description: str):
+    description = ' '.join(description)
+
+    if len(description) > 2000:
+        await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
+        return
+
     user_id = ctx.author.id
     server_id = ctx.guild.id
     with get_lock(f'{user_id}:{server_id}:activities'):
-        activity.log_activity_for_user(user_id, server_id, message)
+        activity.log_activity_for_user(user_id, server_id, description)
     await ctx.send(f'Logged activity for {ctx.author.mention}')
 
 @bot.command()
@@ -54,10 +59,10 @@ async def rmlog(ctx, index: int):
     with get_lock(lock_key):
         activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
         if len(activities_today) <= index:
-            await ctx.send(f'{ctx.author.mention} Could not find log with that index')
+            await ctx.send(f'{ctx.author.mention} Could not find activity with that index')
             return
         activity.remove_activity(activities_today[index].id)
-    await ctx.send(f'{ctx.author.mention} Removed log at index {index}')
+    await ctx.send(f'{ctx.author.mention} Removed activity at index {index}')
 
 @bot.command()
 async def show(ctx):
@@ -72,9 +77,29 @@ async def show(ctx):
     embed = discord.Embed(title=f'{ctx.author}\'s Activities Today', description=description, color=0xFF5733)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
     for idx, act in enumerate(activities_today):
-        escaped_activity = discord.utils.escape_mentions(act.activity)
+        escaped_activity = discord.utils.escape_mentions(act.description)
         embed.add_field(name=f'Activity {idx}', value=escaped_activity, inline=False)
     await ctx.send(embed=embed)
+
+@bot.command()
+async def edit(ctx, index: int, *new_description: str):
+    new_description = ' '.join(new_description)
+
+    if len(new_description) > 2000:
+        await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
+        return
+
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
+    activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
+
+    if len(activities_today) <= index:
+        await ctx.send(f'{ctx.author.mention} Could not find activity with that index')
+        return
+
+    with get_lock(f'{user_id}:{server_id}:activities'):
+        activity.update_activity_description(activities_today[index].id, new_description)
+    await ctx.send(f'{ctx.author.mention} Activity updated')
 
 @bot.command()
 async def settz(ctx, timezone: str):

@@ -15,9 +15,10 @@ def get_timezone_for_user(user_id: int):
         return get_value(cursor.fetchone(), 'timezone', 'America/New_York')
 
 def set_timezone_for_user(user_id: int, timezone: str):
-    if timezone not in pytz.all_timezones:
+    if timezone not in pytz.all_timezones_set:
         return False
 
     with get_cursor() as cursor:
-        query = 'INSERT INTO user_timezone (user_id, timezone) VALUES (%s, %s) ON CONFLICT DO UPDATE SET timezone = %s WHERE user_id = %s'
+        query = 'INSERT INTO user_timezone (user_id, timezone) VALUES (%s, %s) ON CONFLICT (user_id) DO UPDATE SET timezone = %s WHERE EXCLUDED.user_id = %s'
         cursor.execute(query, (user_id, timezone, timezone, user_id,))
+        return True

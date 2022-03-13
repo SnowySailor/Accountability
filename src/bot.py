@@ -72,6 +72,15 @@ async def show(ctx):
             string += act.activity + '\n\n'
         await ctx.send(f'{ctx.author.mention}\'s activies today:\n{string}')
 
+@bot.command()
+async def settz(ctx, timezone: str):
+    user_id = ctx.author.id
+    result = user.set_timezone_for_user(user_id, timezone)
+    if not result:
+        await ctx.send(f'{ctx.author.mention} Invalid timezone. See list here: <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>')
+    else:
+        await ctx.send(f'{ctx.author.mention} Timezone set to {timezone}')
+
 @bot.event
 async def on_command_error(ctx, err):
     err = getattr(err, 'original', err)

@@ -5,22 +5,18 @@ import logging
 import sys
 import traceback
 
-from src.utils.utils import get_config, LoggerWriter
+from src.utils.utils import get_config
+from src.utils.logger import init_logger, logtofile
 from src.internals.database import init_db, run_migrations
 from src.internals.sync import get_lock
 import src.lib.logs
 import src.lib.user
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-sys.stderr = LoggerWriter(logger.error)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
 intents = discord.Intents.default()
 intents.members = True
 intents.guild_messages = True
+
+init_logger()
 
 bot = commands.Bot(command_prefix=';', intents=intents)
 
@@ -28,8 +24,8 @@ bot = commands.Bot(command_prefix=';', intents=intents)
 async def on_ready():
     run_migrations()
     init_db()
-    logger.debug(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    logger.debug('------')
+    logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    logtofile('------')
 
 @bot.command()
 async def ping(ctx, *msg: str):
@@ -61,14 +57,14 @@ async def on_command_error(ctx, err):
     err = getattr(err, 'original', err)
     lines = ''.join(traceback.format_exception(err.__class__, err, err.__traceback__))
     lines = f'Ignoring exception in command {ctx.command}:\n{lines}'
-    logger.exception(lines)
+    logtofile(lines, 'error')
 
 @bot.event
 async def on_error(event, *args, **kwargs):
     s = traceback.format_exc()
     content = f'Ignoring exception in {event}\n{s}'
     # print(content, file=sys.stderr)
-    logger.error(content)
+    logtofile(content, 'error')
 
 def run_bot():
     bot.run(get_config('token'))

@@ -11,4 +11,4 @@ COPY . /app
 RUN pip3 install -r requirements.txt
 
 ENV LANG=C.UTF-8
-CMD python3 ./src/main.py
+CMD python3 ./main.py

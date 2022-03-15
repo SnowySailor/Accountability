@@ -26,11 +26,11 @@ def get_activities_for_user_for_today(user_id: int, server_id: int):
     day_end = datetime.datetime(user_time.year, user_time.month, user_time.day) + datetime.timedelta(days=1)
 
     new_timezone = pytz.timezone('UTC')
-    search_start = user_timezone.localize(day_beginning).astimezone(new_timezone)
-    search_end = user_timezone.localize(day_end).astimezone(new_timezone)
+    search_start = str(user_timezone.localize(day_beginning).astimezone(new_timezone))
+    search_end = str(user_timezone.localize(day_end).astimezone(new_timezone))
 
     with get_cursor() as cursor:
-        query = 'SELECT id, description, created_at FROM activity WHERE user_id = %s AND server_id = %s AND created_at >= %s AND created_at < %s'
+        query = 'SELECT id, description, created_at FROM activity WHERE user_id = %s AND server_id = %s AND created_at >= %s::timestamp AND created_at < %s::timestamp'
         cursor.execute(query, (user_id, server_id, search_start, search_end,))
         for row in cursor.fetchall():
             activity = Activity(row['id'], user_id, server_id, row['description'], row['created_at'])

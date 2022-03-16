@@ -32,6 +32,13 @@ def get_default_categories_for_user(user_id: int, server_id: int):
             default_categories.append(default_category)
         return default_categories
 
+def get_default_category_id_map_for_user(user_id: int, server_id: int) -> dict:
+    id_map = {}
+    categories = get_default_categories_for_user(user_id, server_id)
+    for category in categories:
+        id_map[category.id] = category
+    return id_map
+
 def get_category_by_name(user_id: int, server_id: int, name: str):
     name = purify_name(name)
     with get_cursor() as cursor:

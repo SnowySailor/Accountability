@@ -82,9 +82,15 @@ async def show(ctx):
 
     embed = discord.Embed(title=f'{ctx.author}\'s Activities Today', description=description, color=0xFF5733)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-    for idx, act in enumerate(activities_today):
-        escaped_activity = discord.utils.escape_mentions(act.description)
-        embed.add_field(name=f'Activity {idx}', value=escaped_activity, inline=False)
+    for category in activities_today:
+        if category is None:
+            category = 'No Category'
+        escaped_category = discord.utils.escape_mentions(category)
+        description = ''
+        for idx, activity in enumerate(category):
+            description += f'{idx + 1}. {activity.description}'
+        description = discord.utils.escape_mentions(description)
+        embed.add_field(name=escaped_category, value=description, inline=False)
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -178,19 +184,34 @@ async def rmcat(ctx, name: str, force: str):
 async def lscats(ctx):
     user_id = ctx.author.id
     server_id = ctx.guild.id
-    categories = category.get_categories_for_user(user_id, server_id)
-    default_categories = category.get_default_categories()
-    if len(categories) == 0:
+    custom_categories = category.get_categories_for_user(user_id, server_id)
+    default_categories = category.get_default_categories_for_user(user_id, server_id)
+
+    if len(custom_categories) == 0 && len (default_categories):
         await ctx.send(f'{ctx.author.mention} No categories defined yet')
-    else:
-        description = ''
-        for idx, cat in enumerate(categories):
-            display_name = discord.utils.escape_markdown(cat.display_name)
-            description += f'**{idx + 1}. {display_name}**\n'
-        description.strip()
-        description = discord.utils.escape_mentions(description)
-        embed = discord.Embed(title=f'{ctx.author}\'s Categories', description=description, color=0xFF5733)
-        await ctx.send(embed=embed)
+        return
+
+    custom_description = ''
+    for idx, cat in enumerate(custom_categories):
+        display_name = discord.utils.escape_markdown(cat.display_name)
+        custom_description += f'**{idx + 1}. {display_name}**\n'
+
+    default_description = ''
+    for idx, cat in enumerate(default_categories):
+        display_name = discord.utils.escape_markdown(cat.display_name)
+        custom_description += f'**{idx + 1}. {display_name}**\n'
+
+    custom_description.strip()
+    default_description.strip()
+    custom_description = discord.utils.escape_mentions(custom_description)
+    default_description = discord.utils.escape_mentions(default_description)
+
+    embed = discord.Embed(title=f'{ctx.author}\'s Categories', color=0xFF5733)
+    if len(custom_categories) > 0:
+        embed.add_field(name=f'Custom Categories', value=custom_description, inline=False)
+    if len(default_categories) > 0:
+        embed.add_field(name=f'Default Categories', value=default_description, inline=False)
+    await ctx.send(embed=embed)
 
 @bot.event
 async def on_command_error(ctx, err):

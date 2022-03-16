@@ -11,6 +11,7 @@ from src.internals.database import init_db, run_migrations
 from src.internals.sync import get_lock, is_locked
 import src.lib.activity as activity
 import src.lib.user as user
+import src.lib.category as category
 
 intents = discord.Intents.default()
 intents.members = True
@@ -35,6 +36,10 @@ async def ping(ctx, *msg: str):
 @bot.command()
 async def log(ctx, *description: str):
     description = ' '.join(description)
+
+    if len(description) == 0:
+        await ctx.send(f'{ctx.author.mention} Description cannot be empty')
+        return
 
     if len(description) > 2000:
         await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
@@ -89,6 +94,10 @@ async def edit(ctx, index: int, *new_description: str):
         await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
         return
 
+    if len(new_description) == 0:
+        await ctx.send(f'{ctx.author.mention} Description cannot be empty')
+        return
+
     user_id = ctx.author.id
     server_id = ctx.guild.id
     activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
@@ -109,6 +118,46 @@ async def settz(ctx, timezone: str):
         await ctx.send(f'{ctx.author.mention} Invalid timezone. See list here: <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>')
     else:
         await ctx.send(f'{ctx.author.mention} Timezone set to {timezone}')
+
+@bot.command()
+async def addcat(ctx, name: str):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
+
+    result = category.create_category_for_user(user_id, server_id, name)
+    if result is None:
+        await ctx.send(f'{ctx.author.mention} Category already exists')
+    else:
+        await ctx.send(f'{ctx.author.mention} Category created')
+
+@bot.command()
+async def editcat(ctx, old_name: str, new_name: str):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
+
+    result = category.get_category_by_name(user_id, server_id, old_name)
+    if result is None:
+        await ctx.send(f'{ctx.author.mention} Category does not exist')
+    else:
+        category.update_category_name(result.id, new_name)
+        await ctx.send(f'{ctx.author.mention} Category updated from {result.display_name} to {new_name}')
+
+@bot.command()
+async def listcats(ctx):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
+    categories = category.get_categories_for_user(user_id, server_id)
+    if len(categories) == 0:
+        await ctx.send(f'{ctx.author.mention} No categories defined yet')
+    else:
+        description = ''
+        for idx, cat in enumerate(categories):
+            display_name = discord.utils.escape_markdown(cat.display_name)
+            description += f'**{idx + 1}. {display_name}**\n'
+        description.strip()
+        description = discord.utils.escape_mentions(description)
+        embed = discord.Embed(title=f'{ctx.author}\'s Categories', description=description, color=0xFF5733)
+        await ctx.send(embed=embed)
 
 @bot.event
 async def on_command_error(ctx, err):

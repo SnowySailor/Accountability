@@ -1,4 +1,5 @@
 from ..internals.database import get_cursor, get_conn
+from src.utils.utils import purify_category_name
 
 class DefaultCategory:
     def __init__(self, id: int, pure_name: str, display_name: str):
@@ -22,7 +23,7 @@ def get_default_categories_for_user(user_id: int, server_id: int):
             SELECT id, pure_name, display_name
             FROM default_category
             WHERE id NOT IN (
-                SELECT * FROM default_category_opt_out WHERE user_id = %s AND server_id = %s
+                SELECT default_category_id FROM default_category_opt_out WHERE user_id = %s AND server_id = %s
             )
         '''
         cursor.execute(query, (user_id, server_id,))
@@ -39,8 +40,8 @@ def get_default_category_id_map_for_user(user_id: int, server_id: int) -> dict:
         id_map[category.id] = category
     return id_map
 
-def get_category_by_name(user_id: int, server_id: int, name: str):
-    name = purify_name(name)
+def get_default_category_by_name(name: str):
+    name = purify_category_name(name)
     with get_cursor() as cursor:
         query = 'SELECT id, display_name FROM default_category WHERE pure_name = %s'
         cursor.execute(query, (name,))
@@ -58,7 +59,7 @@ def is_category_being_used_by_activity(user_id: int, server_id: int, category_id
 def is_default_category_name(name: str):
     with get_cursor() as cursor:
         query = 'SELECT 1 FROM default_category WHERE pure_name = %s'
-        cursor.execute(query, (purify_name(name),))
+        cursor.execute(query, (purify_category_name(name),))
         return cursor.fetchone() is not None
 
 def opt_out_of_default_category(user_id: int, server_id: int, category_id: int):
@@ -68,5 +69,5 @@ def opt_out_of_default_category(user_id: int, server_id: int, category_id: int):
         cursor = conn.cursor()
         cursor.execute(update_query, (category_id,))
         cursor.execute(insert_query, (user_id, server_id, category_id,))
-        cursor.commit()
+        conn.commit()
         cursor.close()

@@ -12,7 +12,7 @@ from src.internals.sync import get_lock, is_locked
 import src.lib.activity as activity
 import src.lib.user as user
 import src.lib.category as category
-import src.lib.default_category
+import src.lib.default_category as default_category
 
 intents = discord.Intents.default()
 intents.members = True
@@ -130,8 +130,8 @@ async def addcat(ctx, name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
-    if category.is_default_category_name(new_name):
-        await ctx.send(f'{ctx.author.mention} `{new_name}` already exists as a default category')
+    if default_category.is_default_category_name(name):
+        await ctx.send(f'{ctx.author.mention} `{name}` already exists as a default category')
         return
 
     result = category.create_category_for_user(user_id, server_id, name)
@@ -145,7 +145,7 @@ async def editcat(ctx, old_name: str, new_name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
-    if category.is_default_category_name(new_name):
+    if default_category.is_default_category_name(new_name):
         await ctx.send(f'{ctx.author.mention} `{new_name}` already exists as a default category')
         return
 
@@ -157,17 +157,17 @@ async def editcat(ctx, old_name: str, new_name: str):
         await ctx.send(f'{ctx.author.mention} Category updated from `{result.display_name}` to `{new_name}`')
 
 @bot.command()
-async def rmcat(ctx, name: str, force: str):
+async def rmcat(ctx, name: str, force: str = None):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
     result = default_category.get_default_category_by_name(name)
     if result is not None:
         if default_category.is_category_being_used_by_activity(user_id, server_id, result.id) and force != 'FORCE':
-            ctx.send(f'{ctx.author.mention} That category has activities associated with it. Run `;rmcat "{name}" FORCE` to force removal. Activities with this category will have the category removed.')
+            await ctx.send(f'{ctx.author.mention} That category has activities associated with it. Run `;rmcat "{name}" FORCE` to force removal. Activities with this category will have the category removed.')
         else:
-            default_categories.opt_out_of_default_category(user_id, server_id, result.id)
-            ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
+            default_category.opt_out_of_default_category(user_id, server_id, result.id)
+            await ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
     else:
         result = category.get_category_by_name(user_id, server_id, name)
         if result is None:
@@ -175,31 +175,31 @@ async def rmcat(ctx, name: str, force: str):
                 await ctx.send(f'{ctx.author.mention} Category does not exist')
         else:
             if category.is_category_being_used_by_activity(user_id, server_id, result.id) and force != 'FORCE':
-                ctx.send(f'{ctx.author.mention} That category has activities associated with it. Run `;rmcat "{name}" FORCE` to force removal. Activities with this category will have the category removed.')
+                await ctx.send(f'{ctx.author.mention} That category has activities associated with it. Run `;rmcat "{name}" FORCE` to force removal. Activities with this category will have the category removed.')
             else:
                 category.delete_category(result.id)
-                ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
+                await ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
 
 @bot.command()
 async def lscats(ctx):
     user_id = ctx.author.id
     server_id = ctx.guild.id
     custom_categories = category.get_categories_for_user(user_id, server_id)
-    default_categories = category.get_default_categories_for_user(user_id, server_id)
+    default_categories = default_category.get_default_categories_for_user(user_id, server_id)
 
-    if len(custom_categories) == 0 && len (default_categories):
+    if len(custom_categories) == 0 and len(default_categories) == 0:
         await ctx.send(f'{ctx.author.mention} No categories defined yet')
         return
 
     custom_description = ''
     for idx, cat in enumerate(custom_categories):
         display_name = discord.utils.escape_markdown(cat.display_name)
-        custom_description += f'**{idx + 1}. {display_name}**\n'
+        custom_description += f'{idx + 1}. {display_name}\n'
 
     default_description = ''
     for idx, cat in enumerate(default_categories):
         display_name = discord.utils.escape_markdown(cat.display_name)
-        custom_description += f'**{idx + 1}. {display_name}**\n'
+        default_description += f'{idx + 1}. {display_name}\n'
 
     custom_description.strip()
     default_description.strip()

@@ -3,6 +3,8 @@ import pytz
 
 from ..internals.database import get_cursor
 from .user import get_current_time_for_user, get_timezone_for_user
+import src.lib.category as category
+import src.lib.default_category as default_category
 
 class Activity:
     def __init__(

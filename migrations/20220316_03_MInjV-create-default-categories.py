@@ -21,6 +21,10 @@ steps = [
             ('speaking', 'Speaking'),
             ('listening', 'Listening');
 
+        ALTER TABLE activity ADD COLUMN default_category_id INT NULL REFERENCES default_category(id);
+        CREATE INDEX ON activity (default_category_id);
+        CREATE INDEX ON activity (user_id, server_id, default_category_id) WHERE default_category_id IS NOT NULL;
+
         CREATE TABLE default_category_opt_out (
             id serial NOT NULL PRIMARY KEY,
             user_id bigint NOT NULL,

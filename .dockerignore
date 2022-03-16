@@ -2,5 +2,5 @@ config.json
 .env.postgres
 *.log
 Dockerfile
-docker-copmose.yml
+docker-compose.yml
 __pycache__

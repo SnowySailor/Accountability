@@ -12,6 +12,7 @@ from src.internals.sync import get_lock, is_locked
 import src.lib.activity as activity
 import src.lib.user as user
 import src.lib.category as category
+import src.lib.default_category
 
 intents = discord.Intents.default()
 intents.members = True
@@ -35,6 +36,8 @@ async def ping(ctx, *msg: str):
 
 @bot.command()
 async def log(ctx, *description: str):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
     description = ' '.join(description)
 
     if len(description) == 0:
@@ -45,8 +48,6 @@ async def log(ctx, *description: str):
         await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
         return
 
-    user_id = ctx.author.id
-    server_id = ctx.guild.id
     with get_lock(f'{user_id}:{server_id}:activities'):
         activity.log_activity_for_user(user_id, server_id, description)
     await ctx.send(f'Logged activity for {ctx.author.mention}')
@@ -88,6 +89,8 @@ async def show(ctx):
 
 @bot.command()
 async def edit(ctx, index: int, *new_description: str):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
     new_description = ' '.join(new_description)
 
     if len(new_description) > 2000:
@@ -98,10 +101,7 @@ async def edit(ctx, index: int, *new_description: str):
         await ctx.send(f'{ctx.author.mention} Description cannot be empty')
         return
 
-    user_id = ctx.author.id
-    server_id = ctx.guild.id
     activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
-
     if len(activities_today) <= index:
         await ctx.send(f'{ctx.author.mention} Could not find activity with that index')
         return
@@ -124,6 +124,10 @@ async def addcat(ctx, name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
+    if category.is_default_category_name(new_name):
+        await ctx.send(f'{ctx.author.mention} `{new_name}` already exists as a default category')
+        return
+
     result = category.create_category_for_user(user_id, server_id, name)
     if result is None:
         await ctx.send(f'{ctx.author.mention} Category already exists')
@@ -135,18 +139,47 @@ async def editcat(ctx, old_name: str, new_name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
+    if category.is_default_category_name(new_name):
+        await ctx.send(f'{ctx.author.mention} `{new_name}` already exists as a default category')
+        return
+
     result = category.get_category_by_name(user_id, server_id, old_name)
     if result is None:
         await ctx.send(f'{ctx.author.mention} Category does not exist')
     else:
         category.update_category_name(result.id, new_name)
-        await ctx.send(f'{ctx.author.mention} Category updated from {result.display_name} to {new_name}')
+        await ctx.send(f'{ctx.author.mention} Category updated from `{result.display_name}` to `{new_name}`')
 
 @bot.command()
-async def listcats(ctx):
+async def rmcat(ctx, name: str, force: str):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
+
+    result = default_category.get_default_category_by_name(name)
+    if result is not None:
+        if default_category.is_category_being_used_by_activity(user_id, server_id, result.id) and force != 'FORCE':
+            ctx.send(f'{ctx.author.mention} That category has activities associated with it. Run `;rmcat "{name}" FORCE` to force removal. Activities with this category will have the category removed.')
+        else:
+            default_categories.opt_out_of_default_category(user_id, server_id, result.id)
+            ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
+    else:
+        result = category.get_category_by_name(user_id, server_id, name)
+        if result is None:
+            if result is None:
+                await ctx.send(f'{ctx.author.mention} Category does not exist')
+        else:
+            if category.is_category_being_used_by_activity(user_id, server_id, result.id) and force != 'FORCE':
+                ctx.send(f'{ctx.author.mention} That category has activities associated with it. Run `;rmcat "{name}" FORCE` to force removal. Activities with this category will have the category removed.')
+            else:
+                category.delete_category(result.id)
+                ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
+
+@bot.command()
+async def lscats(ctx):
     user_id = ctx.author.id
     server_id = ctx.guild.id
     categories = category.get_categories_for_user(user_id, server_id)
+    default_categories = category.get_default_categories()
     if len(categories) == 0:
         await ctx.send(f'{ctx.author.mention} No categories defined yet')
     else:

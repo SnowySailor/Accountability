@@ -31,6 +31,9 @@ def log_activity_for_user(user_id: int, server_id: int, description: str, catego
         cursor.execute(query, (user_id, server_id, description, category_id, default_category_id,))
 
 def group_activities_by_category(user_id: int, server_id: int, activities: list) -> dict:
+    if len(activities) == 0:
+        return {}
+
     categories = category.get_category_id_map_for_user(user_id, server_id)
     default_categories = default_category.get_default_category_id_map_for_user(user_id, server_id)
 

@@ -119,28 +119,28 @@ async def show(ctx):
         embed.add_field(name=escaped_category, value=description, inline=False)
     await ctx.send(embed=embed)
 
-@bot.command()
-async def edit(ctx, index: int, *new_description: str):
-    user_id = ctx.author.id
-    server_id = ctx.guild.id
-    new_description = ' '.join(new_description)
+# @bot.command()
+# async def edit(ctx, index: int, *new_description: str):
+#     user_id = ctx.author.id
+#     server_id = ctx.guild.id
+#     new_description = ' '.join(new_description)
 
-    if len(new_description) > 2000:
-        await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
-        return
+#     if len(new_description) > 2000:
+#         await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
+#         return
 
-    if len(new_description) == 0:
-        await ctx.send(f'{ctx.author.mention} Description cannot be empty')
-        return
+#     if len(new_description) == 0:
+#         await ctx.send(f'{ctx.author.mention} Description cannot be empty')
+#         return
 
-    activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
-    if len(activities_today) <= index:
-        await ctx.send(f'{ctx.author.mention} Could not find activity with that index')
-        return
+#     activities_today = activity.get_activities_for_user_for_today(user_id, server_id)
+#     if len(activities_today) <= index:
+#         await ctx.send(f'{ctx.author.mention} Could not find activity with that index')
+#         return
 
-    with get_lock(f'{user_id}:{server_id}:activities'):
-        activity.update_activity_description(activities_today[index].id, new_description)
-    await ctx.send(f'{ctx.author.mention} Activity updated')
+#     with get_lock(f'{user_id}:{server_id}:activities'):
+#         activity.update_activity_description(activities_today[index].id, new_description)
+#     await ctx.send(f'{ctx.author.mention} Activity updated')
 
 @bot.command()
 async def settz(ctx, timezone: str):

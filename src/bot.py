@@ -53,6 +53,32 @@ async def log(ctx, *description: str):
     await ctx.send(f'Logged activity for {ctx.author.mention}')
 
 @bot.command()
+async def logc(ctx, category_name: str, *description: str):
+    user_id = ctx.author.id
+    server_id = ctx.guild.id
+    description = ' '.join(description)
+
+    if len(description) == 0:
+        await ctx.send(f'{ctx.author.mention} Description cannot be empty')
+        return
+
+    if len(description) > 2000:
+        await ctx.send(f'{ctx.author.mention} Please keep descriptions under 2,000 characters')
+        return
+
+    default = default_category.get_default_category_by_name_for_user(user_id, server_id, category_name)
+    cat = category.get_category_by_name(user_id, server_id, category_name)
+    if cat is None and default is None:
+        await ctx.send(f'{ctx.author.mention} Category `{category_name}` does not exist')
+        return
+    else:
+        cat_id = cat.id if cat is not None else None
+        default_id = default.id if default is not None else None
+        with get_lock(f'{user_id}:{server_id}:activities'):
+            activity.log_activity_for_user(user_id, server_id, description, cat_id, default_id)
+        await ctx.send(f'Logged activity for {ctx.author.mention}')
+
+@bot.command()
 async def rmlog(ctx, index: int):
     user_id = ctx.author.id
     server_id = ctx.guild.id
@@ -82,14 +108,14 @@ async def show(ctx):
 
     embed = discord.Embed(title=f'{ctx.author}\'s Activities Today', description=description, color=0xFF5733)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-    for category in activities_today:
-        if category is None:
-            category = 'No Category'
-        escaped_category = discord.utils.escape_mentions(category)
+    for cat, activity_list in activities_today.items():
+        if cat is None:
+            cat = 'No Category'
+        escaped_category = discord.utils.escape_mentions(cat)
         description = ''
-        for idx, activity in enumerate(category):
-            description += f'{idx + 1}. {activity.description}'
-        description = discord.utils.escape_mentions(description)
+        for idx, act in enumerate(activity_list):
+            description += f'{idx + 1}. {act.description}\n'
+        description = discord.utils.escape_mentions(description).strip()
         embed.add_field(name=escaped_category, value=description, inline=False)
     await ctx.send(embed=embed)
 
@@ -213,10 +239,8 @@ async def lscats(ctx):
         display_name = discord.utils.escape_markdown(cat.display_name)
         default_description += f'{idx + 1}. {display_name}\n'
 
-    custom_description.strip()
-    default_description.strip()
-    custom_description = discord.utils.escape_mentions(custom_description)
-    default_description = discord.utils.escape_mentions(default_description)
+    custom_description = discord.utils.escape_mentions(custom_description).strip()
+    default_description = discord.utils.escape_mentions(default_description).strip()
 
     embed = discord.Embed(title=f'{ctx.author}\'s Categories', color=0xFF5733)
     if len(custom_categories) > 0:

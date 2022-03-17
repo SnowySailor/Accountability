@@ -25,10 +25,10 @@ class Activity:
         self.default_category_id = default_category_id
         self.created_at = created_at
 
-def log_activity_for_user(user_id: int, server_id: int, description: str, category_id: int = None):
+def log_activity_for_user(user_id: int, server_id: int, description: str, category_id: int = None, default_category_id: int = None) -> None:
     with get_cursor() as cursor:
-        query = 'INSERT INTO activity (user_id, server_id, description, category_id) VALUES (%s, %s, %s, %s)'
-        cursor.execute(query, (user_id, server_id, description, category_id,))
+        query = 'INSERT INTO activity (user_id, server_id, description, category_id, default_category_id) VALUES (%s, %s, %s, %s, %s)'
+        cursor.execute(query, (user_id, server_id, description, category_id, default_category_id,))
 
 def group_activities_by_category(user_id: int, server_id: int, activities: list) -> dict:
     categories = category.get_category_id_map_for_user(user_id, server_id)
@@ -38,17 +38,22 @@ def group_activities_by_category(user_id: int, server_id: int, activities: list)
     for activity in activities:
         key = None
         if activity.category_id is not None:
-            key = categories[activity.category_id]
+            key = categories[activity.category_id].display_name
         elif activity.default_category_id is not None:
-            key = default_categories[activity.default_category_id]
+            key = default_categories[activity.default_category_id].display_name
 
         if key not in activity_dict:
             activity_dict[key] = []
         activity_dict[key].append(activity)
 
-    for category, activity_list in activity_dict:
-        activity_dict[category] = list(sorted(activity_list, key=lambda x: x.created_at))
-    return dict(sorted(activity_dict))
+    for cat, activity_list in activity_dict.items():
+        activity_dict[cat] = list(sorted(activity_list, key=lambda x: x.created_at))
+
+    no_category_activities = activity_dict[None]
+    del activity_dict[None]
+    activity_dict = dict(sorted(activity_dict.items()))
+    activity_dict[None] = no_category_activities
+    return activity_dict
 
 def get_activities_for_user_for_today(user_id: int, server_id: int) -> list:
     activities = []

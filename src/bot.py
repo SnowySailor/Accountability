@@ -130,8 +130,13 @@ async def addcat(ctx, name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
-    if default_category.is_default_category_name(name):
-        await ctx.send(f'{ctx.author.mention} `{name}` already exists as a default category')
+    default_cat = default_category.get_default_category_by_name(name)
+    if default_cat is not None:
+        if default_category.is_user_opted_out_of_default_category(user_id, server_id, default_cat.id):
+            default_category.opt_into_default_category(user_id, server_id, default_cat.id)
+            await ctx.send(f'{ctx.author.mention} Category created')
+        else:
+            await ctx.send(f'{ctx.author.mention} `{name}` already exists as a default category')
         return
 
     result = category.create_category_for_user(user_id, server_id, name)
@@ -145,13 +150,20 @@ async def editcat(ctx, old_name: str, new_name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
 
-    if default_category.is_default_category_name(new_name):
+    result = category.get_category_by_name(user_id, server_id, new_name)
+    if result is not None:
+        await ctx.send(f'{ctx.author.mention} Category `{new_name}` already exists')
+        return
+
+    default_cat = default_category.get_default_category_by_name(new_name)
+    if default_cat is not None:
         await ctx.send(f'{ctx.author.mention} `{new_name}` already exists as a default category')
         return
 
     result = category.get_category_by_name(user_id, server_id, old_name)
     if result is None:
         await ctx.send(f'{ctx.author.mention} Category does not exist')
+        return
     else:
         category.update_category_name(result.id, new_name)
         await ctx.send(f'{ctx.author.mention} Category updated from `{result.display_name}` to `{new_name}`')

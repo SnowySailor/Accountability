@@ -7,7 +7,7 @@ class DefaultCategory:
         self.pure_name = pure_name
         self.display_name = display_name
 
-def get_default_categories():
+def get_default_categories() -> list:
     with get_cursor() as cursor:
         query = 'SELECT id, pure_name, display_name FROM default_category'
         cursor.execute(query)
@@ -17,7 +17,7 @@ def get_default_categories():
             default_categories.append(default_category)
         return default_categories
 
-def get_default_categories_for_user(user_id: int, server_id: int):
+def get_default_categories_for_user(user_id: int, server_id: int) -> list:
     with get_cursor() as cursor:
         query = '''
             SELECT id, pure_name, display_name
@@ -50,19 +50,19 @@ def get_default_category_by_name(name: str):
             return None
         return DefaultCategory(result['id'], name, result['display_name'])
 
-def is_category_being_used_by_activity(user_id: int, server_id: int, category_id: int):
+def is_category_being_used_by_activity(user_id: int, server_id: int, category_id: int) -> bool:
     with get_cursor() as cursor:
         query = 'SELECT 1 FROM activity WHERE user_id = %s AND server_id = %s AND default_category_id = %s'
         cursor.execute(query, (user_id, server_id, category_id,))
         return cursor.fetchone() is not None
 
-def is_default_category_name(name: str):
+def is_default_category_name(name: str) -> bool:
     with get_cursor() as cursor:
         query = 'SELECT 1 FROM default_category WHERE pure_name = %s'
         cursor.execute(query, (purify_category_name(name),))
         return cursor.fetchone() is not None
 
-def opt_out_of_default_category(user_id: int, server_id: int, category_id: int):
+def opt_out_of_default_category(user_id: int, server_id: int, category_id: int) -> None:
     with get_conn() as conn:
         update_query = 'UPDATE activity SET default_category_id = NULL WHERE default_category_id = %s'
         insert_query = 'INSERT INTO default_category_opt_out (user_id, server_id, default_category_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING'
@@ -71,3 +71,14 @@ def opt_out_of_default_category(user_id: int, server_id: int, category_id: int):
         cursor.execute(insert_query, (user_id, server_id, category_id,))
         conn.commit()
         cursor.close()
+
+def opt_into_default_category(user_id: int, server_id: int, category_id: int) -> None:
+    with get_cursor() as cursor:
+        query = 'DELETE FROM default_category_opt_out WHERE user_id = %s AND server_id = %s AND default_category_id = %s'
+        cursor.execute(query, (user_id, server_id, category_id,))
+
+def is_user_opted_out_of_default_category(user_id: int, server_id: int, category_id: int) -> bool:
+    with get_cursor() as cursor:
+        query = 'SELECT 1 FROM default_category_opt_out WHERE user_id = %s AND server_id = %s AND default_category_id = %s'
+        cursor.execute(query, (user_id, server_id, category_id,))
+        return cursor.fetchone() is not None

@@ -152,9 +152,18 @@ async def settz(ctx, timezone: str):
         await ctx.send(f'{ctx.author.mention} Timezone set to {timezone}')
 
 @bot.command()
-async def addcat(ctx, name: str):
+async def addcat(ctx, name: str = ''):
     user_id = ctx.author.id
     server_id = ctx.guild.id
+    name = name.strip()
+
+    if len(name) == 0:
+        await ctx.send(f'{ctx.author.mention} Please provide a category name')
+        return
+
+    if len(name) > 50:
+        await ctx.send(f'{ctx.author.mention} Category name must be 50 characters or fewer')
+        return
 
     default_cat = default_category.get_default_category_by_name(name)
     if default_cat is not None:
@@ -175,6 +184,15 @@ async def addcat(ctx, name: str):
 async def editcat(ctx, old_name: str, new_name: str):
     user_id = ctx.author.id
     server_id = ctx.guild.id
+    new_name = new_name.strip()
+
+    if len(new_name) == 0:
+        await ctx.send(f'{ctx.author.mention} Please provide a category name')
+        return
+
+    if len(new_name) > 50:
+        await ctx.send(f'{ctx.author.mention} Category name must be 50 characters or fewer')
+        return
 
     result = category.get_category_by_name(user_id, server_id, new_name)
     if result is not None:

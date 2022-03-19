@@ -12,7 +12,7 @@ class Category:
         self.display_name = display_name
         self.created_at = created_at
 
-def get_categories_for_user(user_id: int, server_id: int):
+def get_categories_for_user(user_id: int, server_id: int) -> list:
     categories = []
     with get_cursor() as cursor:
         query = 'SELECT id, pure_name, display_name, created_at FROM category WHERE user_id = %s AND server_id = %s'
@@ -50,19 +50,19 @@ def create_category_for_user(user_id: int, server_id: int, name: str):
         cursor.execute(query, (user_id, server_id, pure_name, name,))
         return cursor.fetchone()
 
-def update_category_name(category_id: int, new_name: str):
+def update_category_name(category_id: int, new_name: str) -> None:
     pure_name = purify_category_name(new_name)
     with get_cursor() as cursor:
         query = 'UPDATE category SET pure_name = %s, display_name = %s WHERE id = %s'
         cursor.execute(query, (pure_name, new_name, category_id,))
 
-def is_category_being_used_by_activity(user_id: int, server_id: int, category_id: int):
+def is_category_being_used_by_activity(user_id: int, server_id: int, category_id: int) -> bool:
     with get_cursor() as cursor:
         query = 'SELECT 1 FROM activity WHERE user_id = %s AND server_id = %s AND category_id = %s'
         cursor.execute(query, (user_id, server_id, category_id,))
         return cursor.fetchone() is not None
 
-def delete_category(category_id: int):
+def delete_category(category_id: int) -> None:
     # Need to do this transactionally
     with get_conn() as conn:
         update_query = 'UPDATE activity SET category_id = NULL WHERE category_id = %s'

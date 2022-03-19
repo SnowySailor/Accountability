@@ -71,11 +71,12 @@ def is_default_category_name(name: str) -> bool:
         return cursor.fetchone() is not None
 
 def opt_out_of_default_category(user_id: int, server_id: int, category_id: int) -> None:
+    # Transactionally
     with get_conn() as conn:
-        update_query = 'UPDATE activity SET default_category_id = NULL WHERE default_category_id = %s'
+        update_query = 'UPDATE activity SET default_category_id = NULL WHERE default_category_id = %s AND user_id = %s AND server_id = %s'
         insert_query = 'INSERT INTO default_category_opt_out (user_id, server_id, default_category_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING'
         cursor = conn.cursor()
-        cursor.execute(update_query, (category_id,))
+        cursor.execute(update_query, (category_id, user_id, server_id,))
         cursor.execute(insert_query, (user_id, server_id, category_id,))
         conn.commit()
         cursor.close()

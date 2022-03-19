@@ -34,3 +34,6 @@ def get_config(*keys: str, **kwargs: any):
     with open('./config/config.json', 'r') as f:
         config = json.loads(f.read())
         return get_multi_level_value(config, *keys, **kwargs)
+
+def purify_category_name(name: str):
+    return name.lower().strip()

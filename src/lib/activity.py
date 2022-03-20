@@ -1,8 +1,9 @@
 import datetime
 import pytz
 
-from ..internals.database import get_cursor
-from .user import get_current_time_for_user, get_timezone_for_user
+from src.utils.utils import get_value
+from src.internals.database import get_cursor
+from src.lib.user import get_current_time_for_user, get_timezone_for_user
 import src.lib.category as category
 import src.lib.default_category as default_category
 
@@ -52,10 +53,12 @@ def group_activities_by_category(user_id: int, server_id: int, activities: list)
     for cat, activity_list in activity_dict.items():
         activity_dict[cat] = list(sorted(activity_list, key=lambda x: x.created_at))
 
-    no_category_activities = activity_dict[None]
-    del activity_dict[None]
+    no_category_activities = get_value(activity_dict, None)
+    if no_category_activities is not None:
+        del activity_dict[None]
     activity_dict = dict(sorted(activity_dict.items()))
-    activity_dict[None] = no_category_activities
+    if no_category_activities is not None:
+        activity_dict[None] = no_category_activities
     return activity_dict
 
 def get_activities_for_user_for_today(user_id: int, server_id: int) -> list:

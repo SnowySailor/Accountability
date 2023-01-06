@@ -22,3 +22,19 @@ def set_timezone_for_user(user_id: int, timezone: str):
         query = 'INSERT INTO user_timezone (user_id, timezone) VALUES (%s, %s) ON CONFLICT (user_id) DO UPDATE SET timezone = %s WHERE EXCLUDED.user_id = %s'
         cursor.execute(query, (user_id, timezone, timezone, user_id,))
         return True
+
+def set_wanikani_api_token_for_user(user_id: int, token: str):
+    with get_cursor() as cursor:
+        query = 'INSERT INTO user_wanikani_token (user_id, token) VALUES (%s, %s) ON CONFLICT (user_id) DO UPDATE SET token = %s WHERE EXCLUDED.user_id = %s'
+        cursor.execute(query, (user_id, token, token, user_id,))
+
+def remove_wanikani_api_token_for_user(user_id: int):
+    with get_cursor() as cursor:
+        query = 'DELETE FROM user_wanikani_token WHERE user_id = %s'
+        cursor.execute(query, (user_id,))
+
+def get_users_with_api_tokens():
+    with get_cursor() as cursor:
+        query = 'SELECT user_id, token FROM user_wanikani_token'
+        cursor.execute(query)
+        return cursor.fetchall()

@@ -276,7 +276,7 @@ async def settoken(ctx, token):
     await ctx.send('Set token')
 
 @bot.command()
-async def cleartoken(ctx, token):
+async def cleartoken(ctx):
     user_id = ctx.author.id
     user.remove_wanikani_api_token_for_user(user_id)
     await ctx.send('Cleared token')

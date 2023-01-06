@@ -5,7 +5,7 @@ from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
-from src.utils.utils import get_config, get_value
+from src.utils.utils import get_config, get_multi_level_value
 import traceback
 
 async def do_critical_checks(bot: commands.Bot) -> None:
@@ -15,7 +15,7 @@ async def do_critical_checks(bot: commands.Bot) -> None:
         for user in users:
             assignments = wk_api.get_new_assignments_this_hour(user['token'])
             for assignment in assignments:
-                if get_value(assignment, 'srs_stage', 0) < 5 and get_value(assignment, 'subject_type') in ['radical', 'kanji']:
+                if get_multi_level_value(assignment, 'data', 'srs_stage', default=0) < 5 and get_multi_level_value(assignment, 'data', 'subject_type') in ['radical', 'kanji']:
                     await notify_of_new_criticals(user['user_id'], bot)
                     break
         await asyncio.sleep(get_seconds_until_next_hour())

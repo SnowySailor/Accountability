@@ -16,8 +16,8 @@ def do_wk_get(url: str, token: str, params = {}, headers = {}):
     headers['Authorization'] = f'Bearer {token}'
     headers['Wanikani-Revision'] = '20170710'
 
-    result = requests.get(url, headers=headers, params=params)
     try:
+        result = requests.get(url, headers=headers, params=params)
         return result.json()['data']
     except:
         return None

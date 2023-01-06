@@ -13,6 +13,7 @@ import src.lib.activity as activity
 import src.lib.user as user
 import src.lib.category as category
 import src.lib.default_category as default_category
+import src.lib.critical_checks as critical_checks
 
 intents = discord.Intents.default()
 intents.members = True
@@ -26,6 +27,7 @@ bot = commands.Bot(command_prefix=';', intents=intents)
 async def on_ready():
     run_migrations()
     init_db()
+    bot.loop.create_task(critical_checks.do_critical_checks(bot))
     logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logtofile('------')
 
@@ -266,6 +268,18 @@ async def lscats(ctx):
     if len(default_categories) > 0:
         embed.add_field(name=f'Default Categories', value=default_description, inline=False)
     await ctx.send(embed=embed)
+
+@bot.command()
+async def settoken(ctx, token):
+    user_id = ctx.author.id
+    user.set_wanikani_api_token_for_user(user_id, token)
+    await ctx.send('Set token')
+
+@bot.command()
+async def cleartoken(ctx, token):
+    user_id = ctx.author.id
+    user.remove_wanikani_api_token_for_user(user_id)
+    await ctx.send('Cleared token')
 
 @bot.event
 async def on_command_error(ctx, err):

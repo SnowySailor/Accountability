@@ -5,7 +5,8 @@ from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
-from src.utils.utils import get_config
+from src.utils.utils import get_config, get_value
+import traceback
 
 async def do_critical_checks(bot: commands.Bot) -> None:
     await asyncio.sleep(get_seconds_until_next_hour())
@@ -14,14 +15,19 @@ async def do_critical_checks(bot: commands.Bot) -> None:
         for user in users:
             assignments = wk_api.get_new_assignments_this_hour(user['token'])
             for assignment in assignments:
-                if assignment['srs_stage'] < 5 and assignment['subject_type'] in ['radical', 'kanji']:
+                if get_value(assignment, 'srs_stage', 0) < 5 and get_value(assignment, 'subject_type') in ['radical', 'kanji']:
                     await notify_of_new_criticals(user['user_id'], bot)
                     break
         await asyncio.sleep(get_seconds_until_next_hour())
 
 async def notify_of_new_criticals(user_id, bot):
-    channel = bot.get_channel(int(get_config('channel_id')))
-    await channel.send(f'<@{user_id}> you have criticals up for review')
+    try:
+        channel = bot.get_channel(int(get_config('channel_id')))
+        await channel.send(f'<@{user_id}> you have criticals up for review')
+    except Exception as e:
+        s = traceback.format_exc()
+        content = f'Ignoring exception\n{s}'
+        logtofile(content, 'error')
 
 def get_seconds_until_next_hour():
     delta = datetime.timedelta(hours=1)

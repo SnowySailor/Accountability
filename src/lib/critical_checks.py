@@ -19,7 +19,7 @@ async def do_critical_checks(bot: commands.Bot) -> None:
                 if assignment['srs_stage'] < 5 and assignment['subject_type'] in ['radical', 'kanji']:
                     await notify_of_new_criticals(user['user_id'], bot)
                     break
-        await asyncio.sleep(60)
+        await asyncio.sleep(get_seconds_until_next_hour())
 
 async def notify_of_new_criticals(user_id, bot):
     channel = bot.get_channel(accountability_channel_id)

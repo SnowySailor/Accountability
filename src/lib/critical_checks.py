@@ -5,9 +5,7 @@ from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
-
-critical_check_thread = None
-accountability_channel_id = 953147358206640238
+from src.utils.utils import get_config
 
 async def do_critical_checks(bot: commands.Bot) -> None:
     await asyncio.sleep(get_seconds_until_next_hour())
@@ -22,12 +20,12 @@ async def do_critical_checks(bot: commands.Bot) -> None:
         await asyncio.sleep(get_seconds_until_next_hour())
 
 async def notify_of_new_criticals(user_id, bot):
-    channel = bot.get_channel(accountability_channel_id)
+    channel = bot.get_channel(int(get_config('channel_id')))
     await channel.send(f'<@{user_id}> you have criticals up for review')
 
 def get_seconds_until_next_hour():
     delta = datetime.timedelta(hours=1)
     now = datetime.datetime.now()
-    next_hour = (now + delta).replace(microsecond=0, second=10, minute=0)
+    next_hour = (now + delta).replace(microsecond=0, second=0, minute=1)
     wait_seconds = (next_hour - now).seconds
     return wait_seconds

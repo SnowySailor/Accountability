@@ -23,6 +23,10 @@ services:
     volumes:
       - .:/app
 
+  weeb-redis:
+    image: redis:latest
+    container_name: weeb-redis
+
 volumes:
   db-data:
     driver: local

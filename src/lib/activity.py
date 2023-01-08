@@ -12,7 +12,7 @@ class Activity:
         self,
         id: int,
         user_id: int,
-        server_id: int,
+        channel_id: int,
         description: str,
         category_id: int,
         default_category_id: int,
@@ -20,23 +20,23 @@ class Activity:
     ):
         self.id = id
         self.user_id = user_id
-        self.server_id = server_id
+        self.channel_id = channel_id
         self.description = description
         self.category_id = category_id
         self.default_category_id = default_category_id
         self.created_at = created_at
 
-def log_activity_for_user(user_id: int, server_id: int, description: str, category_id: int = None, default_category_id: int = None) -> None:
+def log_activity_for_user(user_id: int, channel_id: int, description: str, category_id: int = None, default_category_id: int = None) -> None:
     with get_cursor() as cursor:
-        query = 'INSERT INTO activity (user_id, server_id, description, category_id, default_category_id) VALUES (%s, %s, %s, %s, %s)'
-        cursor.execute(query, (user_id, server_id, description, category_id, default_category_id,))
+        query = 'INSERT INTO activity (user_id, channel_id, description, category_id, default_category_id) VALUES (%s, %s, %s, %s, %s)'
+        cursor.execute(query, (user_id, channel_id, description, category_id, default_category_id,))
 
-def group_activities_by_category(user_id: int, server_id: int, activities: list) -> dict:
+def group_activities_by_category(user_id: int, channel_id: int, activities: list) -> dict:
     if len(activities) == 0:
         return {}
 
-    categories = category.get_category_id_map_for_user(user_id, server_id)
-    default_categories = default_category.get_default_category_id_map_for_user(user_id, server_id)
+    categories = category.get_category_id_map_for_user(user_id, channel_id)
+    default_categories = default_category.get_default_category_id_map_for_user(user_id, channel_id)
 
     activity_dict = {}
     for activity in activities:
@@ -65,7 +65,7 @@ def group_activities_by_category(user_id: int, server_id: int, activities: list)
 
     return activity_dict
 
-def get_activities_for_user_for_today(user_id: int, server_id: int) -> list:
+def get_activities_for_user_for_today(user_id: int, channel_id: int) -> list:
     activities = []
 
     user_time = get_current_time_for_user(user_id)
@@ -82,15 +82,15 @@ def get_activities_for_user_for_today(user_id: int, server_id: int) -> list:
             SELECT id, description, created_at, category_id, default_category_id
             FROM activity
             WHERE user_id = %s
-                AND server_id = %s
+                AND channel_id = %s
                 AND created_at >= %s::timestamp
                 AND created_at < %s::timestamp
         '''
-        cursor.execute(query, (user_id, server_id, search_start, search_end,))
+        cursor.execute(query, (user_id, channel_id, search_start, search_end,))
         for row in cursor.fetchall():
-            activity = Activity(row['id'], user_id, server_id, row['description'], row['category_id'], row['default_category_id'], row['created_at'])
+            activity = Activity(row['id'], user_id, channel_id, row['description'], row['category_id'], row['default_category_id'], row['created_at'])
             activities.append(activity)
-    return group_activities_by_category(user_id, server_id, activities)
+    return group_activities_by_category(user_id, channel_id, activities)
 
 def remove_activity(activity_id: int) -> None:
     with get_cursor() as cursor:

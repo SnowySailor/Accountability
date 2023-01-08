@@ -4,6 +4,15 @@ import pytz
 from ..internals.database import get_cursor
 from ..utils.utils import get_value
 
+class User:
+    def __init__(
+        self,
+        id: int,
+        token: str
+    ):
+        self.id = id
+        self.token = token
+
 def get_current_time_for_user(user_id: int):
     timezone = get_timezone_for_user(user_id)
     return datetime.datetime.now(pytz.timezone(timezone))
@@ -37,4 +46,7 @@ def get_users_with_api_tokens():
     with get_cursor() as cursor:
         query = 'SELECT user_id, token FROM user_wanikani_token'
         cursor.execute(query)
-        return cursor.fetchall()
+        users = []
+        for row in cursor.fetchall():
+            users.append(User(row['user_id'], row['token']))
+        return users

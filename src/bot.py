@@ -8,6 +8,7 @@ import traceback
 from src.utils.utils import get_config
 from src.utils.logger import init_logger, logtofile
 from src.internals.database import init_db, run_migrations
+from src.internals.redis import init_redis
 from src.internals.sync import get_lock, is_locked
 import src.lib.activity as activity
 import src.lib.user as user
@@ -27,6 +28,7 @@ bot = commands.Bot(command_prefix=';', intents=intents)
 async def on_ready():
     run_migrations()
     init_db()
+    init_redis()
     bot.loop.create_task(critical_checks.do_critical_checks(bot))
     logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logtofile('------')

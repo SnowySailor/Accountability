@@ -27,7 +27,7 @@ async def do_critical_checks(bot: commands.Bot) -> None:
                         subject_id = get_multi_level_value(assignment, 'data', 'subject_id')
                         subject = wk_api.get_subject(subject_id, user.token)
                         wk_user = wk_api.get_user(user.token)
-                        if not get_value(subject, 'level') != get_value(wk_user, 'level'):
+                        if get_value(subject, 'level') == get_value(wk_user, 'level'):
                             await notify_of_new_criticals(user.id, bot)
                             break
             await asyncio.sleep(get_seconds_until_next_hour())

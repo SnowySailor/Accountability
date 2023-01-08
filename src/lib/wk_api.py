@@ -20,7 +20,7 @@ def get_subject(subject_id: int, token: str, reload: bool = False) -> Union[dict
     subject = redis.get(key)
     if subject is None or reload:
         subject = do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)
-        redis.set(key, serialize(subject))
+        redis.set(key, serialize(subject), ex = 3600 * 24 * 14)
     else:
         subject = deserialize(subject)
     return subject

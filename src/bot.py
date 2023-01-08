@@ -38,7 +38,7 @@ async def ping(ctx, *msg: str):
     resp = ' '.join(msg)
     await ctx.send(resp)
 
-@bot.command()
+@bot.command(help="Logs an Activity with no category")
 async def log(ctx, *description: str):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -56,7 +56,7 @@ async def log(ctx, *description: str):
         activity.log_activity_for_user(user_id, channel_id, description)
     await ctx.send(f'Logged activity for {ctx.author.mention}')
 
-@bot.command()
+@bot.command(help="Logs an Activity with a category")
 async def logc(ctx, category_name: str, *description: str):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -82,7 +82,7 @@ async def logc(ctx, category_name: str, *description: str):
             activity.log_activity_for_user(user_id, channel_id, description, cat_id, default_id)
         await ctx.send(f'Logged activity for {ctx.author.mention}')
 
-@bot.command()
+@bot.command(help="Removes a logs", description="You give the index (starts at 0) and the category name (if you have multiple categories). If it has no category, you can omit the category name.")
 async def rmlog(ctx, index: int, category_name: str = None):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -103,9 +103,21 @@ async def rmlog(ctx, index: int, category_name: str = None):
         activity.remove_activity(activities_today[category_name][index].id)
     await ctx.send(f'{ctx.author.mention} Removed activity at index {index}')
 
-@bot.command()
-async def show(ctx):
-    user_id = ctx.author.id
+@bot.command(help="Shows your activities for today. Optional username")
+async def show(ctx, *name: str):
+    name = ' '.join(name)
+    if len(name) != 0:
+        user = discord.Guild.get_member_named(ctx.guild, name)
+        if user is None:
+            await ctx.send(f'{ctx.author.mention} Could not find user {name}')
+            return
+        user_name = user.name
+        user_id = user.id
+        icon_url = user.avatar_url
+    else:
+        user_name = ctx.author.name
+        user_id = ctx.author.id
+        icon_url = ctx.author.avatar_url
     channel_id = ctx.channel.id
     activities_today = activity.get_activities_for_user_for_today(user_id, channel_id)
 
@@ -113,8 +125,8 @@ async def show(ctx):
     if len(activities_today) == 0:
         description = 'No activities logged today'
 
-    embed = discord.Embed(title=f'{ctx.author}\'s Activities Today', description=description, color=0xFF5733)
-    embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+    embed = discord.Embed(title=f'{user_name}\'s Activities Today', description=description, color=0xFF5733)
+    embed.set_author(name=user_name, icon_url=icon_url)
     for cat, activity_list in activities_today.items():
         if cat is None:
             cat = 'No Category'
@@ -126,7 +138,7 @@ async def show(ctx):
         embed.add_field(name=escaped_category, value=description, inline=False)
     await ctx.send(embed=embed)
 
-@bot.command()
+@bot.command(help="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones", description="Sets timezones. See <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> for a list of timezones. Example: America/Los_Angeles")
 async def settz(ctx, timezone: str):
     user_id = ctx.author.id
     result = user.set_timezone_for_user(user_id, timezone)
@@ -135,7 +147,7 @@ async def settz(ctx, timezone: str):
     else:
         await ctx.send(f'{ctx.author.mention} Timezone set to {timezone}')
 
-@bot.command()
+@bot.command(help="Add a category")
 async def addcat(ctx, name: str = ''):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -164,7 +176,7 @@ async def addcat(ctx, name: str = ''):
     else:
         await ctx.send(f'{ctx.author.mention} Category created')
 
-@bot.command()
+@bot.command(help="Change a category name", description="Old name then new name")
 async def editcat(ctx, old_name: str, new_name: str):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -196,7 +208,7 @@ async def editcat(ctx, old_name: str, new_name: str):
         category.update_category_name(result.id, new_name)
         await ctx.send(f'{ctx.author.mention} Category updated from `{result.display_name}` to `{new_name}`')
 
-@bot.command()
+@bot.command(help="Removes a category", description="Use FORCE to remove a category that has activities associated with it.")
 async def rmcat(ctx, name: str, force: str = None):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -220,7 +232,7 @@ async def rmcat(ctx, name: str, force: str = None):
                 category.delete_category(result.id)
                 await ctx.send(f'{ctx.author.mention} Category `{name}` deleted')
 
-@bot.command()
+@bot.command(help="Lists all your categories")
 async def lscats(ctx):
     user_id = ctx.author.id
     channel_id = ctx.channel.id
@@ -251,13 +263,13 @@ async def lscats(ctx):
         embed.add_field(name=f'Default Categories', value=default_description, inline=False)
     await ctx.send(embed=embed)
 
-@bot.command()
+@bot.command(help="Sets your wanikani token. (Japanese channel only)")
 async def settoken(ctx, token):
     user_id = ctx.author.id
     user.set_wanikani_api_token_for_user(user_id, token)
     await ctx.send('Set token')
 
-@bot.command()
+@bot.command(help="Clears your wanikani token. (Japanese channel only)")
 async def cleartoken(ctx):
     user_id = ctx.author.id
     user.remove_wanikani_api_token_for_user(user_id)

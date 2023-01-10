@@ -1,4 +1,6 @@
+import pytz
 from datetime import datetime, timezone, timedelta
+from dateutil import parser
 import requests
 from typing import Union
 from ..internals.redis import get_redis, serialize, deserialize
@@ -9,7 +11,7 @@ def get_new_assignments_this_hour(token: str) -> list:
         'available_after': start,
         'available_before': end
     }
-    assignments = do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)
+    assignments = do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)['data']
     if assignments is None:
         return []
     return assignments
@@ -19,14 +21,41 @@ def get_subject(subject_id: int, token: str, reload: bool = False) -> Union[dict
     key = f'subject:{subject_id}'
     subject = redis.get(key)
     if subject is None or reload:
-        subject = do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)
+        subject = do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)['data']
         redis.set(key, serialize(subject))
     else:
         subject = deserialize(subject)
     return subject
 
 def get_user(token: str) -> Union[dict, None]:
-    return do_wk_get(f'https://api.wanikani.com/v2/user', token)
+    return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
+
+def get_reviews_completed_yesterday(token: str) -> list:
+    (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
+    return do_wk_get('https://api.wanikani.com/v2/reviews', token, params={'updated_after': start})['data']
+
+def get_lessons_completed_yesterday(token: str) -> list:
+    (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
+    params = {
+        'updated_after': start,
+        'started': 'true'
+    }
+
+    response = do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)
+    updated_assignments = response['data']
+    while response['pages']['next_url'] is not None:
+        response = do_wk_get(response['pages']['next_url'], token)
+        updated_assignments += response['data']
+
+    today_start = datetime.now(pytz.timezone('America/Los_Angeles')).replace(hour=0, minute=0, second=0, microsecond=0)
+    previous_day_start = today_start - timedelta(days=1)
+
+    started_yesterday = []
+    for assignment in updated_assignments:
+        started_date = parser.parse(assignment['data']['started_at'])
+        if started_date > previous_day_start:
+            started_yesterday.append(assignment)
+    return started_yesterday
 
 def do_wk_get(url: str, token: str, params = {}, headers = {}):
     headers['Authorization'] = f'Bearer {token}'
@@ -34,11 +63,17 @@ def do_wk_get(url: str, token: str, params = {}, headers = {}):
 
     try:
         result = requests.get(url, headers=headers, params=params)
-        return result.json()['data']
+        return result.json()
     except:
         return None
 
-def get_current_and_next_hour_formatted() -> str:
-    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-    next_hour = now + timedelta(hours=1, minutes=-1)
-    return (now.strftime('%Y-%m-%dT%H:%M:%S.000000Z'), next_hour.strftime('%Y-%m-%dT%H:%M:%S.000000Z'))
+def get_previous_day_pacific_time_start_and_end_formatted() -> tuple:
+    today_start = datetime.now(pytz.timezone('America/Los_Angeles')).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = today_start.astimezone(pytz.utc)
+    previous_day_start = today_start - timedelta(days=1)
+    return (previous_day_start.strftime('%Y-%m-%dT%H:%M:%S.000000Z'), today_start.strftime('%Y-%m-%dT%H:%M:%S.000000Z'))
+
+def get_current_and_next_hour_formatted() -> tuple:
+    hour_start = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    next_hour = hour_start + timedelta(hours=1, minutes=-1)
+    return (hour_start.strftime('%Y-%m-%dT%H:%M:%S.000000Z'), next_hour.strftime('%Y-%m-%dT%H:%M:%S.000000Z'))

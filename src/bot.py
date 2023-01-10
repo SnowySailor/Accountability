@@ -15,6 +15,7 @@ import src.lib.user as user
 import src.lib.category as category
 import src.lib.default_category as default_category
 import src.lib.critical_checks as critical_checks
+import src.lib.daily_summary as daily_summary
 
 intents = discord.Intents.default()
 intents.members = True
@@ -30,6 +31,7 @@ async def on_ready():
     init_db()
     init_redis()
     bot.loop.create_task(critical_checks.do_critical_checks(bot))
+    bot.loop.create_task(daily_summary.do_daily_summary(bot))
     logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logtofile('------')
 

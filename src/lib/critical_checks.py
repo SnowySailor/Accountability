@@ -1,4 +1,3 @@
-from threading import Thread
 import asyncio
 import datetime
 from discord.ext import commands
@@ -32,8 +31,11 @@ async def do_critical_checks(bot: commands.Bot) -> None:
                             break
             await asyncio.sleep(get_seconds_until_next_hour())
     except:
+        s = traceback.format_exc()
+        content = f'Ignoring exception\n{s}'
+        logtofile(content, 'error')
         running = False
-        raise
+        await do_critical_checks(bot)
 
 async def notify_of_new_criticals(user_id, bot):
     try:

@@ -5,7 +5,7 @@ from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
-from src.utils.utils import get_config, get_multi_level_value, get_value
+from src.utils.utils import get_config
 import traceback
 import pytz
 
@@ -39,25 +39,20 @@ async def do_daily_summary(bot: commands.Bot) -> None:
         await do_daily_summary(bot)
 
 async def send_daily_summary_message(data: dict, bot: commands.Bot) -> None:
-    try:
-        user_name = bot.user.name
-        icon_url = bot.user.avatar_url
-        channel = bot.get_channel(int(get_config('channel_id')))
-        embed = discord.Embed(title=f'Daily WaniKani Summary', color=0xFF5733)
-        embed.set_author(name=user_name, icon_url=icon_url)
+    user_name = bot.user.name
+    icon_url = bot.user.avatar_url
+    channel = bot.get_channel(int(get_config('channel_id')))
+    embed = discord.Embed(title=f'Daily WaniKani Summary', color=0xFF5733)
+    embed.set_author(name=user_name, icon_url=icon_url)
 
-        message = ''
-        for user_id, wk_data in data.items():
-            user = channel.guild.get_member(user_id)
-            lessons = wk_data['lessons']
-            reviews = wk_data['reviews']
-            message += f'Completed {lessons} lessons, and {reviews} reviews'
-            embed.add_field(name=user.display_name, value=message, inline=False)
-        await channel.send(embed=embed)    
-    except Exception as e:
-        s = traceback.format_exc()
-        content = f'Ignoring exception\n{s}'
-        logtofile(content, 'error')
+    message = ''
+    for user_id, wk_data in data.items():
+        user = channel.guild.get_member(user_id)
+        lessons = wk_data['lessons']
+        reviews = wk_data['reviews']
+        message += f'Completed {lessons} lessons, and {reviews} reviews'
+        embed.add_field(name=user.display_name, value=message, inline=False)
+    await channel.send(embed=embed)
 
 def get_seconds_until_next_day_pacific_time():
     day_delta = datetime.timedelta(days=1)

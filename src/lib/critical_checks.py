@@ -38,13 +38,8 @@ async def do_critical_checks(bot: commands.Bot) -> None:
         await do_critical_checks(bot)
 
 async def notify_of_new_criticals(user_id, bot):
-    try:
-        channel = bot.get_channel(int(get_config('channel_id')))
-        await channel.send(f'<@{user_id}> you have criticals up for review')
-    except Exception as e:
-        s = traceback.format_exc()
-        content = f'Ignoring exception\n{s}'
-        logtofile(content, 'error')
+    channel = bot.get_channel(int(get_config('channel_id')))
+    await channel.send(f'<@{user_id}> you have criticals up for review')
 
 def get_seconds_until_next_hour():
     delta = datetime.timedelta(hours=1)

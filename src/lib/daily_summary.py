@@ -50,7 +50,7 @@ async def send_daily_summary_message(data: dict, bot: commands.Bot) -> None:
         user = channel.guild.get_member(user_id)
         lessons = wk_data['lessons']
         reviews = wk_data['reviews']
-        message += f'Completed {lessons} lessons, and {reviews} reviews'
+        message = f'Completed {lessons} lessons, and {reviews} reviews'
         embed.add_field(name=user.display_name, value=message, inline=False)
     await channel.send(embed=embed)
 

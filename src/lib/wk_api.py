@@ -30,9 +30,9 @@ def get_subject(subject_id: int, token: str, reload: bool = False) -> Union[dict
 def get_user(token: str) -> Union[dict, None]:
     return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
 
-def get_reviews_completed_yesterday(token: str) -> list:
+def get_count_of_reviews_completed_yesterday(token: str) -> list:
     (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
-    return do_wk_get('https://api.wanikani.com/v2/reviews', token, params={'updated_after': start})['data']
+    return do_wk_get('https://api.wanikani.com/v2/reviews', token, params={'updated_after': start})['total_count']
 
 def get_lessons_completed_yesterday(token: str) -> list:
     (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
@@ -56,6 +56,18 @@ def get_lessons_completed_yesterday(token: str) -> list:
         if started_date > previous_day_start:
             started_yesterday.append(assignment)
     return started_yesterday
+
+def get_count_of_reviews_available_before_end_of_yesterday(token: str) -> int:
+    (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
+    end = parser.parse(end)
+    # available_before is inclusive, so it will return reviews available at the specified time too
+    # need to subtract 1 minute so it doesn't include reviews that just now became available
+    end = (end - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M:%S.000000Z')
+    params = {
+        'immediately_available_for_review': 'true',
+        'available_before': end
+    }
+    return do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)['total_count']
 
 def do_wk_get(url: str, token: str, params = {}, headers = {}):
     headers['Authorization'] = f'Bearer {token}'

@@ -10,6 +10,7 @@ import traceback
 import pytz
 
 running = False
+pending_review_disappointed_threshold = 25
 
 async def do_daily_summary(bot: commands.Bot) -> None:
     global running
@@ -47,16 +48,25 @@ async def send_daily_summary_message(data: dict, bot: commands.Bot) -> None:
     embed = discord.Embed(title=f'Daily WaniKani Summary', color=0xFF5733)
 
     message = ''
+    disappointed_in_users = []
     for user_id, wk_data in data.items():
         user = channel.guild.get_member(user_id)
         lessons = wk_data['lessons']
         reviews = wk_data['reviews']
         pending_reviews = wk_data['pending_reviews']
+        if pending_reviews >= pending_review_disappointed_threshold:
+            disappointed_in_users.append(user.mention)
         if pending_reviews == 0:
             pending_reviews = 'no'
         message = f'Completed {lessons} lessons and {reviews} reviews\nHas {pending_reviews} available reviews'
         embed.add_field(name=user.display_name, value=message, inline=False)
     await channel.send(embed=embed)
+
+    if len(disappointed_in_users) > 0:
+        message = ' '.join(disappointed_in_users)
+        message += f' you had at least {pending_review_disappointed_threshold} reviews remaining at the end of the day\n'
+        message += 'https://tenor.com/view/anime-k-on-disappoint-disappointed-gif-6051447'
+        await channel.send(message)
 
 def get_seconds_until_next_day_pacific_time():
     day_delta = datetime.timedelta(days=1)

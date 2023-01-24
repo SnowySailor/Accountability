@@ -1,10 +1,10 @@
 import asyncio
-import datetime
 from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
 from src.utils.utils import get_config, get_multi_level_value, get_value
+from src.utils.time import get_seconds_until_next_hour
 import traceback
 
 running = False
@@ -40,10 +40,3 @@ async def do_critical_checks(bot: commands.Bot) -> None:
 async def notify_of_new_criticals(user_id, bot):
     channel = bot.get_channel(int(get_config('channel_id')))
     await channel.send(f'<@{user_id}> you have criticals up for review')
-
-def get_seconds_until_next_hour():
-    delta = datetime.timedelta(hours=1)
-    now = datetime.datetime.now()
-    next_hour = (now + delta).replace(microsecond=0, second=0, minute=1)
-    wait_seconds = (next_hour - now).seconds
-    return wait_seconds

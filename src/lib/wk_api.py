@@ -30,12 +30,12 @@ def get_subject(subject_id: int, token: str, reload: bool = False) -> Union[dict
 def get_user(token: str) -> Union[dict, None]:
     return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
 
-def get_count_of_reviews_completed_yesterday(token: str) -> list:
-    (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
+def get_count_of_reviews_completed_yesterday(token: str, timezone: str) -> list:
+    (start, end) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
     return do_wk_get('https://api.wanikani.com/v2/reviews', token, params={'updated_after': start})['total_count']
 
-def get_lessons_completed_yesterday(token: str) -> list:
-    (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
+def get_lessons_completed_yesterday(token: str, timezone: str) -> list:
+    (start, end) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
     params = {
         'updated_after': start,
         'started': 'true'
@@ -47,7 +47,7 @@ def get_lessons_completed_yesterday(token: str) -> list:
         response = do_wk_get(response['pages']['next_url'], token)
         updated_assignments += response['data']
 
-    today_start = datetime.now(pytz.timezone('America/Los_Angeles')).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(pytz.timezone(timezone)).replace(hour=0, minute=0, second=0, microsecond=0)
     previous_day_start = today_start - timedelta(days=1)
 
     started_yesterday = []
@@ -57,8 +57,8 @@ def get_lessons_completed_yesterday(token: str) -> list:
             started_yesterday.append(assignment)
     return started_yesterday
 
-def get_count_of_reviews_available_before_end_of_yesterday(token: str) -> int:
-    (start, end) = get_previous_day_pacific_time_start_and_end_formatted()
+def get_count_of_reviews_available_before_end_of_yesterday(token: str, timezone: str) -> int:
+    (start, end) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
     end = parser.parse(end)
     # available_before is inclusive, so it will return reviews available at the specified time too
     # need to subtract 1 minute so it doesn't include reviews that just now became available
@@ -79,8 +79,8 @@ def do_wk_get(url: str, token: str, params = {}, headers = {}):
     except:
         return None
 
-def get_previous_day_pacific_time_start_and_end_formatted() -> tuple:
-    today_start = datetime.now(pytz.timezone('America/Los_Angeles')).replace(hour=0, minute=0, second=0, microsecond=0)
+def get_previous_day_for_timezone_start_and_end_formatted(timezone: str) -> tuple:
+    today_start = datetime.now(pytz.timezone(timezone)).replace(hour=0, minute=0, second=0, microsecond=0)
     today_start = today_start.astimezone(pytz.utc)
     previous_day_start = today_start - timedelta(days=1)
     return (previous_day_start.strftime('%Y-%m-%dT%H:%M:%S.000000Z'), today_start.strftime('%Y-%m-%dT%H:%M:%S.000000Z'))

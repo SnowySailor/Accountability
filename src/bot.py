@@ -16,6 +16,7 @@ import src.lib.category as category
 import src.lib.default_category as default_category
 import src.lib.critical_checks as critical_checks
 import src.lib.daily_summary as daily_summary
+import src.lib.wk_api as wk_api
 
 intents = discord.Intents.default()
 intents.members = True
@@ -265,17 +266,40 @@ async def lscats(ctx):
         embed.add_field(name=f'Default Categories', value=default_description, inline=False)
     await ctx.send(embed=embed)
 
-@bot.command(help="Sets your wanikani token. (Japanese channel only)")
+@bot.command(help="Sets your WaniKani token (Japanese channel only)")
 async def settoken(ctx, token):
     user_id = ctx.author.id
     user.set_wanikani_api_token_for_user(user_id, token)
     await ctx.send('Set token')
 
-@bot.command(help="Clears your wanikani token. (Japanese channel only)")
+@bot.command(help="Clears your WaniKani token (Japanese channel only)")
 async def cleartoken(ctx):
     user_id = ctx.author.id
     user.remove_wanikani_api_token_for_user(user_id)
     await ctx.send('Cleared token')
+
+@bot.command(help="Show information about a WaniKani user (Japanese channel only)")
+async def wkstats(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.author
+    user_id = member.id
+
+    token = user.get_wanikani_api_token(user_id)
+    if token is None:
+        await ctx.send('User does not have their WaniKani API token saved')
+        return
+
+    infos = []
+    stats = wk_api.get_user_stats(token)
+    for key, value in stats.items():
+        infos.append(key + ': ' + str(value))
+    embed = discord.Embed(title=f'{member.display_name}\'s WaniKani Stats', description='\n'.join(infos), color=0xFF5733)
+    await ctx.send(embed=embed)
+
+@wkstats.error
+async def wkstats_error_handler(ctx, error):
+    if isinstance(error, commands.errors.MemberNotFound):
+        await ctx.send("Invalid user")
 
 @bot.event
 async def on_command_error(ctx, err):

@@ -15,5 +15,5 @@ def init_logger():
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 
-def logtofile(msg: str, level: str = 'debug'):
+def logtofile(msg: str, level: str = 'info'):
     getattr(logger, level)(msg)

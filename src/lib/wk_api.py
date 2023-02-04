@@ -69,6 +69,22 @@ def get_count_of_reviews_available_before_end_of_yesterday(token: str, timezone:
     }
     return do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)['total_count']
 
+def get_user_stats(token: str) -> dict:
+    user_stats = {}
+    response = do_wk_get('https://api.wanikani.com/v2/level_progressions', token)['data']
+    if len(response) == 0:
+        user_stats['Level'] = 0
+    else:
+        user_stats['Level'] = response[-1]['data']['level']
+
+    response = do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})
+    user_stats['Available reviews'] = response['total_count']
+
+    response = do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_lessons': True})
+    user_stats['Available lessons'] = response['total_count']
+
+    return user_stats
+
 def do_wk_get(url: str, token: str, params = {}, headers = {}):
     headers['Authorization'] = f'Bearer {token}'
     headers['Wanikani-Revision'] = '20170710'

@@ -54,6 +54,12 @@ def get_users_with_api_tokens():
             users.append(User(row['user_id'], row['token'], get_timezone_for_user(row['user_id'])))
         return users
 
+def get_wanikani_api_token(user_id: int) -> Union[str, None]:
+    with get_cursor() as cursor:
+        query = 'SELECT token FROM user_wanikani_token WHERE user_id = %s'
+        cursor.execute(query, (user_id,))
+        return get_value(cursor.fetchone(), 'token')
+
 def is_midnight_in_users_timezone(user_id: int) -> bool:
     t = get_current_time_for_user(user_id)
     return t.hour == 0

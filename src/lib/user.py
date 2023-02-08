@@ -63,3 +63,7 @@ def get_wanikani_api_token(user_id: int) -> Union[str, None]:
 def is_midnight_in_users_timezone(user_id: int) -> bool:
     t = get_current_time_for_user(user_id)
     return t.hour == 0
+
+def is_11pm_in_users_timezone(user_id: int) -> bool:
+    t = get_current_time_for_user(user_id)
+    return t.hour == 23

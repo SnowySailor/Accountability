@@ -9,7 +9,6 @@ import traceback
 from src.utils.time import get_seconds_until_next_hour
 
 running = False
-pending_review_disappointed_threshold = 25
 
 async def do_daily_summary(bot: commands.Bot) -> None:
     global running
@@ -57,7 +56,7 @@ async def send_daily_summary_message(data: dict, bot: commands.Bot) -> None:
         lessons = wk_data['lessons']
         reviews = wk_data['reviews']
         pending_reviews = wk_data['pending_reviews']
-        if pending_reviews >= pending_review_disappointed_threshold:
+        if pending_reviews >= get_config('pending_review_disappointed_threshold'):
             disappointed_in_users.append(user.mention)
         if pending_reviews == 0:
             pending_reviews = 'no'
@@ -66,6 +65,7 @@ async def send_daily_summary_message(data: dict, bot: commands.Bot) -> None:
     await channel.send(embed=embed)
 
     if len(disappointed_in_users) > 0:
+        pending_review_disappointed_threshold = get_config('pending_review_disappointed_threshold')
         message = ' '.join(disappointed_in_users)
         message += f' you had at least {pending_review_disappointed_threshold} reviews remaining at the end of the day\n'
         message += 'https://tenor.com/view/anime-k-on-disappoint-disappointed-gif-6051447'

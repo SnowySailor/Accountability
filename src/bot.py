@@ -16,6 +16,7 @@ import src.lib.category as category
 import src.lib.default_category as default_category
 import src.lib.critical_checks as critical_checks
 import src.lib.daily_summary as daily_summary
+import src.lib.daily_review_warning as daily_review_warning
 import src.lib.wk_api as wk_api
 
 intents = discord.Intents.default()
@@ -33,6 +34,7 @@ async def on_ready():
     init_redis()
     bot.loop.create_task(critical_checks.do_critical_checks(bot))
     bot.loop.create_task(daily_summary.do_daily_summary(bot))
+    bot.loop.create_task(daily_review_warning.do_daily_review_warning(bot))
     logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logtofile('------')
 

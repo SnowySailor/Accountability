@@ -77,13 +77,15 @@ def get_user_stats(token: str) -> dict:
     else:
         user_stats['Level'] = response[-1]['data']['level']
 
-    response = do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})
-    user_stats['Available reviews'] = response['total_count']
+    user_stats['Available reviews'] = get_number_of_lessons_available_now(token)
 
     response = do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_lessons': True})
     user_stats['Available lessons'] = response['total_count']
 
     return user_stats
+
+def get_number_of_lessons_available_now(token: str) -> int:
+    return do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})['total_count']
 
 def do_wk_get(url: str, token: str, params = {}, headers = {}):
     headers['Authorization'] = f'Bearer {token}'

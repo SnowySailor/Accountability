@@ -5,5 +5,11 @@
         "user": "eris",
         "password": "password",
         "database": "accountability"
-    }
+    },
+    "redis": {
+        "host": "weeb-redis",
+        "port": 6379
+    },
+    "channel_id": "",
+    "pending_review_disappointed_threshold": 25
 }

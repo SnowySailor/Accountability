@@ -87,7 +87,7 @@ def get_user_stats(token: str) -> dict:
 def get_number_of_lessons_available_now(token: str) -> int:
     return do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})['total_count']
 
-def do_wk_get(url: str, token: str, params = {}, headers = {}):
+def do_wk_get(url: str, token: str, params = {}, headers = {}, retries = 2):
     headers['Authorization'] = f'Bearer {token}'
     headers['Wanikani-Revision'] = '20170710'
 
@@ -95,7 +95,9 @@ def do_wk_get(url: str, token: str, params = {}, headers = {}):
         result = requests.get(url, headers=headers, params=params)
         return result.json()
     except:
-        return None
+        if retries < 1:
+            return None
+        return do_wk_get(url, token, params, headers, retries - 1)
 
 def get_previous_day_for_timezone_start_and_end_formatted(timezone: str) -> tuple:
     today_start = datetime.now(pytz.timezone(timezone)).replace(hour=0, minute=0, second=0, microsecond=0)

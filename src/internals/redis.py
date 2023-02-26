@@ -33,6 +33,16 @@ def delete_key_list(keys):
     for key in keys:
         conn.delete(key)
 
+def remember(key, callback, ttl = None, reload = False):
+    redis = get_redis()
+    content = redis.get(key)
+    if content is None or reload:
+        content = callback()
+        redis.set(key, serialize(content), ttl)
+    else:
+        content = deserialize(content)
+    return content
+
 def serialize(data):
     return pickle.dumps(data)
 

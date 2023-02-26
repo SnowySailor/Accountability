@@ -2,8 +2,9 @@ import pytz
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
 import requests
+from hashlib import sha256
 from typing import Union
-from ..internals.redis import get_redis, serialize, deserialize
+from ..internals.redis import remember
 
 def get_new_assignments_this_hour(token: str) -> list:
     (start, end) = get_current_and_next_hour_formatted()
@@ -17,25 +18,23 @@ def get_new_assignments_this_hour(token: str) -> list:
     return assignments
 
 def get_subject(subject_id: int, token: str, reload: bool = False) -> Union[dict, None]:
-    redis = get_redis()
-    key = f'subject:{subject_id}'
-    subject = redis.get(key)
-    if subject is None or reload:
-        subject = do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)['data']
-        redis.set(key, serialize(subject))
-    else:
-        subject = deserialize(subject)
-    return subject
+    key = f'subject:v2:{subject_id}'
+    def callback():
+        return do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)['data']
+    return remember(key, callback, 60*60*24*14)
 
 def get_user(token: str) -> Union[dict, None]:
-    return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
+    key = f'user:v1:{sha256(token.encode("utf-8")).hexdigest()}'
+    def callback():
+        return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
+    return remember(key, callback, 60*1)
 
 def get_count_of_reviews_completed_yesterday(token: str, timezone: str) -> list:
-    (start, end) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
+    (start, _) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
     return do_wk_get('https://api.wanikani.com/v2/reviews', token, params={'updated_after': start})['total_count']
 
 def get_lessons_completed_yesterday(token: str, timezone: str) -> list:
-    (start, end) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
+    (start, _) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
     params = {
         'updated_after': start,
         'started': 'true'

@@ -4,7 +4,7 @@ from dateutil import parser
 import requests
 from hashlib import sha256
 from typing import Union
-from ..internals.redis import remember
+from ...internals.redis import remember
 
 def get_new_assignments_this_hour(token: str) -> list:
     (start, end) = get_current_and_next_hour_formatted()
@@ -18,16 +18,10 @@ def get_new_assignments_this_hour(token: str) -> list:
     return assignments
 
 def get_subject(subject_id: int, token: str, reload: bool = False) -> Union[dict, None]:
-    key = f'subject:v2:{subject_id}'
-    def callback():
-        return do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)['data']
-    return remember(key, callback, 60*60*24*14)
+    return do_wk_get(f'https://api.wanikani.com/v2/subjects/{subject_id}', token)['data']
 
 def get_user(token: str) -> Union[dict, None]:
-    key = f'user:v1:{sha256(token.encode("utf-8")).hexdigest()}'
-    def callback():
-        return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
-    return remember(key, callback, 60*1)
+    return do_wk_get(f'https://api.wanikani.com/v2/user', token)['data']
 
 def get_count_of_reviews_completed_yesterday(token: str, timezone: str) -> list:
     (start, _) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
@@ -68,22 +62,13 @@ def get_count_of_reviews_available_before_end_of_yesterday(token: str, timezone:
     }
     return do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)['total_count']
 
-def get_user_stats(token: str) -> dict:
-    user_stats = {}
-    response = do_wk_get('https://api.wanikani.com/v2/level_progressions', token)['data']
-    if len(response) == 0:
-        user_stats['Level'] = 0
-    else:
-        user_stats['Level'] = response[-1]['data']['level']
-
-    user_stats['Available reviews'] = get_number_of_lessons_available_now(token)
-
-    response = do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_lessons': True})
-    user_stats['Available lessons'] = response['total_count']
-
-    return user_stats
+def get_user_level_progression_info(token: str) -> Union[dict, None]
+    return do_wk_get('https://api.wanikani.com/v2/level_progressions', token)['data']
 
 def get_number_of_lessons_available_now(token: str) -> int:
+    return do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_lessons': True})
+
+def get_number_of_reviews_available_now(token: str) -> int:
     return do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})['total_count']
 
 def do_wk_get(url: str, token: str, params = {}, headers = {}, retries = 2):

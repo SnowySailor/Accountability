@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
-import src.lib.wk_api as wk_api
+import src.lib.wanikani
 from src.utils.utils import get_config
 import traceback
 from src.utils.time import get_seconds_until_next_hour
@@ -23,9 +23,9 @@ async def do_daily_summary(bot: commands.Bot) -> None:
             data = {}
             for user in users:
                 if user_lib.is_midnight_in_users_timezone(user.id):
-                    reviews = wk_api.get_count_of_reviews_completed_yesterday(user.token, user.timezone)
-                    lessons = wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
-                    pending_reviews = wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
+                    reviews = wanikani.api.get_count_of_reviews_completed_yesterday(user.token, user.timezone)
+                    lessons = wanikani.api.get_lessons_completed_yesterday(user.token, user.timezone)
+                    pending_reviews = api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
                     data[user.id] = {
                         'reviews': reviews,
                         'lessons': len(lessons),

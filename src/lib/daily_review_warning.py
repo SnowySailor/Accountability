@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from src.utils.logger import logtofile
 import src.lib.user as user_lib
-import src.lib.wk_api as wk_api
+import src.lib.wanikani
 from src.utils.utils import get_config
 import traceback
 from src.utils.time import get_seconds_until_next_hour
@@ -23,7 +23,7 @@ async def do_daily_review_warning(bot: commands.Bot) -> None:
             almost_overdue_users = []
             for user in users:
                 if user_lib.is_11pm_in_users_timezone(user.id):
-                    reviews = wk_api.get_number_of_lessons_available_now(user.token)
+                    reviews = wanikani.api.get_number_of_lessons_available_now(user.token)
                     if reviews > get_config('pending_review_disappointed_threshold'):
                         almost_overdue_users.append(user.id)
             if len(almost_overdue_users) > 0:

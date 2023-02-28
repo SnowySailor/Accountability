@@ -6,7 +6,7 @@ import sys
 import traceback
 
 from src.utils.utils import get_config
-from src.utils.logger import init_logger, logtofile
+from src.utils.logger import init_logger, logtofile, logtodiscord
 from src.internals.database import init_db, run_migrations
 from src.internals.redis import init_redis
 from src.internals.sync import get_lock, is_locked
@@ -14,10 +14,11 @@ import src.lib.activity as activity
 import src.lib.user as user
 import src.lib.category as category
 import src.lib.default_category as default_category
-import src.lib.critical_checks as critical_checks
-import src.lib.daily_summary as daily_summary
-import src.lib.daily_review_warning as daily_review_warning
 import src.lib.wk_api as wk_api
+import src.tasks.critical_checks as critical_checks
+import src.tasks.daily_summary as daily_summary
+import src.tasks.daily_review_warning as daily_review_warning
+import src.tasks.user_level_up as user_level_up
 
 intents = discord.Intents.default()
 intents.members = True
@@ -35,6 +36,7 @@ async def on_ready():
     bot.loop.create_task(critical_checks.do_critical_checks(bot))
     bot.loop.create_task(daily_summary.do_daily_summary(bot))
     bot.loop.create_task(daily_review_warning.do_daily_review_warning(bot))
+    bot.loop.create_task(user_level_up.do_user_level_up_alert(bot))
     logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logtofile('------')
 
@@ -309,12 +311,13 @@ async def on_command_error(ctx, err):
     lines = ''.join(traceback.format_exception(err.__class__, err, err.__traceback__))
     lines = f'Ignoring exception in command {ctx.command}:\n{lines}'
     logtofile(lines, 'error')
+    await logtodiscord(f'```{lines}```', bot)
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    s = traceback.format_exc()
-    content = f'Ignoring exception in {event}\n{s}'
-    logtofile(content, 'error')
+    trace = traceback.format_exc()
+    logtofile(trace, 'error')
+    await logtodiscord(f'```{trace}```', bot)
 
 def run_bot():
     bot.run(get_config('token'))

@@ -5,6 +5,7 @@ import requests
 from hashlib import sha256
 from typing import Union
 from ..internals.redis import remember
+from src.utils.utils import parse_timestamp
 
 def get_new_assignments_this_hour(token: str) -> list:
     (start, end) = get_current_and_next_hour_formatted()
@@ -51,14 +52,14 @@ def get_lessons_completed_yesterday(token: str, timezone: str) -> list:
 
     started_yesterday = []
     for assignment in updated_assignments:
-        started_date = parser.parse(assignment['data']['started_at'])
+        started_date = parse_timestamp(assignment['data']['started_at'])
         if started_date > previous_day_start:
             started_yesterday.append(assignment)
     return started_yesterday
 
 def get_count_of_reviews_available_before_end_of_yesterday(token: str, timezone: str) -> int:
     (start, end) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
-    end = parser.parse(end)
+    end = parse_timestamp(end)
     # available_before is inclusive, so it will return reviews available at the specified time too
     # need to subtract 1 minute so it doesn't include reviews that just now became available
     end = (end - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M:%S.000000Z')
@@ -70,7 +71,7 @@ def get_count_of_reviews_available_before_end_of_yesterday(token: str, timezone:
 
 def get_user_stats(token: str) -> dict:
     user_stats = {}
-    response = do_wk_get('https://api.wanikani.com/v2/level_progressions', token)['data']
+    response = get_user_level_progressions(token)['data']
     if len(response) == 0:
         user_stats['Level'] = 0
     else:
@@ -82,6 +83,9 @@ def get_user_stats(token: str) -> dict:
     user_stats['Available lessons'] = response['total_count']
 
     return user_stats
+
+def get_user_level_progressions(token: str) -> dict:
+    return do_wk_get('https://api.wanikani.com/v2/level_progressions', token)
 
 def get_number_of_lessons_available_now(token: str) -> int:
     return do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})['total_count']

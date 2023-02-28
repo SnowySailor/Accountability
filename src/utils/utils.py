@@ -1,5 +1,7 @@
 import json
 import sys
+import datetime
+from dateutil import parser
 
 class LoggerWriter:
     def __init__(self, level: str):
@@ -37,3 +39,9 @@ def get_config(*keys: str, **kwargs: any):
 
 def purify_category_name(name: str):
     return name.lower().strip()
+
+def parse_timestamp(timestamp: str):
+    try:
+        return parser.parse(timestamp)
+    except ValueError:
+        return None

@@ -1,44 +1,33 @@
 import asyncio
 import discord
 from discord.ext import commands
-from src.utils.logger import logtofile
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
 from src.utils.utils import get_config
-import traceback
 from src.utils.time import get_seconds_until_next_hour
-
-running = False
+from src.internals.accountability_task import AccountabilityTask
 
 async def do_daily_summary(bot: commands.Bot) -> None:
-    global running
-    if running:
-        return
+    # don't start immediately; wait until next hour before checking stuff
+    await asyncio.sleep(get_seconds_until_next_hour())
+    task = AccountabilityTask('daily_summary', bot, looping_task)
+    await task.start()
 
-    try:
-        running = True
-        await asyncio.sleep(get_seconds_until_next_hour())
-        while True:
-            users = user_lib.get_users_with_api_tokens()
-            data = {}
-            for user in users:
-                if user_lib.is_midnight_in_users_timezone(user.id):
-                    reviews = wk_api.get_count_of_reviews_completed_yesterday(user.token, user.timezone)
-                    lessons = wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
-                    pending_reviews = wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
-                    data[user.id] = {
-                        'reviews': reviews,
-                        'lessons': len(lessons),
-                        'pending_reviews': pending_reviews
-                    }
-            await send_daily_summary_message(data, bot)
-            await asyncio.sleep(get_seconds_until_next_hour())
-    except:
-        s = traceback.format_exc()
-        content = f'Ignoring exception\n{s}'
-        logtofile(content, 'error')
-        running = False
-        await do_daily_summary(bot)
+async def looping_task(bot: commands.Bot) -> None:
+    users = user_lib.get_users_with_api_tokens()
+    data = {}
+    for user in users:
+        if user_lib.is_midnight_in_users_timezone(user.id):
+            reviews = wk_api.get_count_of_reviews_completed_yesterday(user.token, user.timezone)
+            lessons = wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
+            pending_reviews = wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
+            data[user.id] = {
+                'reviews': reviews,
+                'lessons': len(lessons),
+                'pending_reviews': pending_reviews
+            }
+    await send_daily_summary_message(data, bot)
+    await asyncio.sleep(get_seconds_until_next_hour())
 
 async def send_daily_summary_message(data: dict, bot: commands.Bot) -> None:
     if len(data) == 0:

@@ -20,7 +20,7 @@ def get_lock(key: str):
 
         lock = asyncio.Lock()
         locks[key] = lock
-        yield lock
+    yield locks[key]
 
 def is_locked(key: str):
     if key in locks:

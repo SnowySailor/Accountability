@@ -2,6 +2,8 @@ import logging
 import discord
 import sys
 
+from discord.ext import commands
+from src.utils.utils import get_config
 from .utils import LoggerWriter
 
 logger = None
@@ -17,3 +19,7 @@ def init_logger():
 
 def logtofile(msg: str, level: str = 'info'):
     getattr(logger, level)(msg)
+
+async def logtodiscord(message: str, bot: commands.Bot) -> None:
+    channel = bot.get_channel(int(get_config('error_log_channel_id')))
+    await channel.send(message)

@@ -15,10 +15,10 @@ import src.lib.user as user
 import src.lib.category as category
 import src.lib.default_category as default_category
 import src.lib.wk_api as wk_api
-import src.tasks.critical_checks as critical_checks
-import src.tasks.daily_summary as daily_summary
-import src.tasks.daily_review_warning as daily_review_warning
-import src.tasks.user_level_up as user_level_up
+from src.tasks.critical_checks import CriticalChecks
+from src.tasks.daily_summary import DailySummary
+from src.tasks.daily_review_warning import DailyReviewWarning
+from src.tasks.user_level_up_notifier import UserLevelUpNotifier
 
 intents = discord.Intents.default()
 intents.members = True
@@ -33,12 +33,15 @@ async def on_ready():
     run_migrations()
     init_db()
     init_redis()
-    bot.loop.create_task(critical_checks.do_critical_checks(bot))
-    bot.loop.create_task(daily_summary.do_daily_summary(bot))
-    bot.loop.create_task(daily_review_warning.do_daily_review_warning(bot))
-    bot.loop.create_task(user_level_up.do_user_level_up_alert(bot))
+    init_tasks()
     logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
     logtofile('------')
+
+def init_tasks():
+    bot.loop.create_task(CriticalChecks(bot).start())
+    bot.loop.create_task(DailyReviewWarning(bot).start())
+    bot.loop.create_task(DailySummary(bot).start())
+    bot.loop.create_task(UserLevelUpNotifier(bot).start())
 
 @bot.command()
 async def ping(ctx, *msg: str):

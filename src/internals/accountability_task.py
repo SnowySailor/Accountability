@@ -8,10 +8,9 @@ import asyncio
 running_tasks = set()
 
 class AccountabilityTask:
-    def __init__(self, type: str, bot: commands.Bot, target):
-        self.type = type
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.target = target
+        self.type = ''
 
     async def start(self):
         global running_tasks
@@ -22,7 +21,7 @@ class AccountabilityTask:
 
         try:
             while True:
-                await self.target(self.bot)
+                await self.looping_task()
         except:
             try:
                 with get_lock(self.type):
@@ -30,14 +29,11 @@ class AccountabilityTask:
             except KeyError:
                 pass
 
-            sleep_time = get_seconds_until_next_hour() - 60
-            if sleep_time < 0:
-                sleep_time = 60
-
             trace = traceback.format_exc()
-            message = f'Exception in `{self.type}` (restarting task in {sleep_time} seconds):\n```{content}\n```'
+            message = f'Exception in `{self.type}`:\n```{trace}\n```'
             logtofile(message, 'error')
-            await logtodiscord(message, bot)
-            await self.send_error_to_discord(trace, sleep_time)
-            await asyncio.sleep(sleep_time)
+            await logtodiscord(message, self.bot)
         await self.start()
+
+    def looping_task(self):
+        raise NotImplementedError("looping_task not implemented")

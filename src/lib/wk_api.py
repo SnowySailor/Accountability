@@ -90,6 +90,12 @@ def get_user_level_progressions(token: str) -> dict:
 def get_number_of_lessons_available_now(token: str) -> int:
     return do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': True})['total_count']
 
+def is_user_on_vacation_mode(token: str) -> bool:
+    user = get_user(token)
+    if user['current_vacation_started_at'] is None:
+        return False
+    return True
+
 def do_wk_get(url: str, token: str, params = {}, headers = {}, retries = 2):
     headers['Authorization'] = f'Bearer {token}'
     headers['Wanikani-Revision'] = '20170710'

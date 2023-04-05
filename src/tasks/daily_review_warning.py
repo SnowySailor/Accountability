@@ -16,7 +16,7 @@ class DailyReviewWarning(AccountabilityTask):
         users = user_lib.get_users_with_api_tokens()
         almost_overdue_users = []
         for user in users:
-            if wk_api.is_user_on_vacation_mode(user.token):
+            if user_lib.is_user_on_vacation_mode(user.id):
                 continue
 
             if user_lib.is_11pm_in_users_timezone(user.id):

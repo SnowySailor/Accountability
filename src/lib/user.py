@@ -4,6 +4,7 @@ from typing import Union
 
 from ..internals.database import get_cursor
 from ..utils.utils import get_value
+import src.lib.wk_api
 
 class User:
     def __init__(
@@ -67,3 +68,9 @@ def is_midnight_in_users_timezone(user_id: int) -> bool:
 def is_11pm_in_users_timezone(user_id: int) -> bool:
     t = get_current_time_for_user(user_id)
     return t.hour == 23
+
+def is_user_on_vacation_mode(user_id: int) -> bool:
+    token = get_wanikani_api_token(user_id)
+    if token is not None:
+        return wk_api.is_user_on_vacation_mode(token)
+    return False

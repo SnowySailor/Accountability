@@ -26,7 +26,7 @@ intents.guild_messages = True
 
 init_logger()
 
-bot = commands.Bot(command_prefix=';', intents=intents)
+bot = commands.Bot(command_prefix=get_config('command_prefix', default = ';'), intents=intents)
 
 @bot.event
 async def on_ready():
@@ -313,14 +313,12 @@ async def on_command_error(ctx, err):
     err = getattr(err, 'original', err)
     lines = ''.join(traceback.format_exception(err.__class__, err, err.__traceback__))
     lines = f'Ignoring exception in command {ctx.command}:\n{lines}'
-    logtofile(lines, 'error')
-    await logtodiscord(f'```{lines}```', bot)
+    await logtodiscord(f'```{lines}```', bot, 'error')
 
 @bot.event
 async def on_error(event, *args, **kwargs):
     trace = traceback.format_exc()
-    logtofile(trace, 'error')
-    await logtodiscord(f'```{trace}```', bot)
+    await logtodiscord(f'```{trace}```', bot, 'error')
 
 def run_bot():
     bot.run(get_config('token'))

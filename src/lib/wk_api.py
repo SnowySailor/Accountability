@@ -4,8 +4,10 @@ from dateutil import parser
 import requests
 from hashlib import sha256
 from typing import Union
+
 from ..internals.redis import remember
 from src.utils.utils import parse_timestamp
+from src.utils.logger import logtofile
 
 def get_new_assignments_this_hour(token: str) -> list:
     (start, end) = get_current_and_next_hour_formatted()
@@ -100,12 +102,18 @@ def do_wk_get(url: str, token: str, params = {}, headers = {}, retries = 2):
     headers['Authorization'] = f'Bearer {token}'
     headers['Wanikani-Revision'] = '20170710'
 
+    result = None
     try:
         result = requests.get(url, headers=headers, params=params)
+        if result.status_code < 200 or result.status_code > 399:
+            raise Exception()
         return result.json()
     except:
         if retries < 1:
-            return None
+            status_code = None
+            if result is not None:
+                status_code = result.status_code
+            raise Exception(f'Failed to get {url} after 3 attempts. Last status code was {status_code}.') from None
         return do_wk_get(url, token, params, headers, retries - 1)
 
 def get_previous_day_for_timezone_start_and_end_formatted(timezone: str) -> tuple:

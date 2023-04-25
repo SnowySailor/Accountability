@@ -31,8 +31,7 @@ class AccountabilityTask:
 
             trace = traceback.format_exc()
             message = f'Exception in `{self.type}`:\n```{trace}\n```'
-            logtofile(message, 'error')
-            await logtodiscord(message, self.bot)
+            await logtodiscord(message, self.bot, 'error')
         await self.start()
 
     def looping_task(self):

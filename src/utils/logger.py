@@ -17,9 +17,10 @@ def init_logger():
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 
-def logtofile(msg: str, level: str = 'info'):
-    getattr(logger, level)(msg)
+def logtofile(message: str, level: str = 'info'):
+    getattr(logger, level)(message)
 
-async def logtodiscord(message: str, bot: commands.Bot) -> None:
+async def logtodiscord(message: str, bot: commands.Bot, level: str = 'info') -> None:
+    logtofile(message, level)
     channel = bot.get_channel(int(get_config('error_log_channel_id')))
     await channel.send(message)

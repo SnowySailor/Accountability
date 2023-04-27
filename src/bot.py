@@ -297,7 +297,7 @@ async def wkstats(ctx, member: discord.Member = None):
         return
 
     infos = []
-    stats = wk_api.get_user_stats(token)
+    stats = await wk_api.get_user_stats(token)
     for key, value in stats.items():
         infos.append(key + ': ' + str(value))
     embed = discord.Embed(title=f'{member.display_name}\'s WaniKani Stats', description='\n'.join(infos), color=0xFF5733)

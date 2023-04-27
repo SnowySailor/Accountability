@@ -17,13 +17,13 @@ class DailySummary(AccountabilityTask):
         users = user_lib.get_users_with_api_tokens()
         data = {}
         for user in users:
-            if wk_api.is_user_on_vacation_mode(user.token):
+            if await wk_api.is_user_on_vacation_mode(user.token):
                 continue
 
             if user_lib.is_midnight_in_users_timezone(user.id):
-                reviews = wk_api.get_count_of_reviews_completed_yesterday(user.token, user.timezone)
-                lessons = wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
-                pending_reviews = wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
+                reviews = await wk_api.get_count_of_reviews_completed_yesterday(user.token, user.timezone)
+                lessons = await wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
+                pending_reviews = await wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
                 data[user.id] = {
                     'reviews': reviews,
                     'lessons': len(lessons),

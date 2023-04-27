@@ -16,12 +16,12 @@ class CriticalChecks(AccountabilityTask):
         users = user_lib.get_users_with_api_tokens()
         users_to_notify = []
         for user in users:
-            assignments = wk_api.get_new_assignments_this_hour(user.token)
+            assignments = await wk_api.get_new_assignments_this_hour(user.token)
             for assignment in assignments:
                 if get_multi_level_value(assignment, 'data', 'srs_stage', default=6) < 5 and get_multi_level_value(assignment, 'data', 'subject_type') in ['radical', 'kanji']:
                     subject_id = get_multi_level_value(assignment, 'data', 'subject_id')
-                    subject = wk_api.get_subject(subject_id, user.token)
-                    wk_user = wk_api.get_user(user.token)
+                    subject = await wk_api.get_subject(subject_id, user.token)
+                    wk_user = await wk_api.get_user(user.token)
                     if get_value(subject, 'level') == get_value(wk_user, 'level'):
                         users_to_notify.append(user.id)
                         break

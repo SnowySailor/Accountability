@@ -16,7 +16,7 @@ class UserLevelUpNotifier(AccountabilityTask):
         users = user_lib.get_users_with_api_tokens()
         users_to_notify = []
         for user in users:
-            progressions = wk_api.get_user_level_progressions(user.token)
+            progressions = await wk_api.get_user_level_progressions(user.token)
             for level in progressions['data']:
                 unlocked_timestamp_str = get_multi_level_value(level, 'data', 'unlocked_at', default = '1900-01-01T00:00:00.000000Z')
                 unlocked_timestamp = parse_timestamp(unlocked_timestamp_str)

@@ -43,6 +43,16 @@ def remember(key, callback, ttl = None, reload = False):
         content = deserialize(content)
     return content
 
+async def remember_async(key, callback, ttl = None, reload = False):
+    redis = get_redis()
+    content = redis.get(key)
+    if content is None or reload:
+        content = await callback()
+        redis.set(key, serialize(content), ttl)
+    else:
+        content = deserialize(content)
+    return content
+
 def serialize(data):
     return pickle.dumps(data)
 

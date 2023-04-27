@@ -16,11 +16,11 @@ class DailyReviewWarning(AccountabilityTask):
         users = user_lib.get_users_with_api_tokens()
         almost_overdue_users = []
         for user in users:
-            if wk_api.is_user_on_vacation_mode(user.token):
+            if await wk_api.is_user_on_vacation_mode(user.token):
                 continue
 
             if user_lib.is_11pm_in_users_timezone(user.id):
-                reviews = wk_api.get_number_of_lessons_available_now(user.token)
+                reviews = await wk_api.get_number_of_lessons_available_now(user.token)
                 if reviews > get_config('pending_review_disappointed_threshold'):
                     almost_overdue_users.append(user.id)
         if len(almost_overdue_users) > 0:

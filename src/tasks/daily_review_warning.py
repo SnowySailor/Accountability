@@ -20,7 +20,7 @@ class DailyReviewWarning(AccountabilityTask):
                 continue
 
             if user_lib.is_11pm_in_users_timezone(user.id):
-                reviews = await wk_api.get_number_of_lessons_available_now(user.token)
+                reviews = await wk_api.get_number_of_reviews_available_now(user.token)
                 if reviews > get_config('pending_review_disappointed_threshold'):
                     almost_overdue_users.append(user.id)
         if len(almost_overdue_users) > 0:

@@ -51,7 +51,7 @@ class DailySummary(AccountabilityTask):
                 disappointed_in_users.append(user.mention)
             if pending_reviews == 0:
                 pending_reviews = 'no'
-            message = f'Completed {lessons} lessons and {reviews} reviews\nHas {pending_reviews} available reviews'
+            message = f'Completed {lessons} lessons and ~{reviews} reviews\nHas {pending_reviews} available reviews'
             embed.add_field(name=user.display_name, value=message, inline=False)
         await channel.send(embed=embed)
 

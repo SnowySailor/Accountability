@@ -18,7 +18,7 @@ async def get_new_assignments_this_hour(token: str) -> list:
         'available_after': start,
         'available_before': end
     }
-    assignments = (await do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params))['data']
+    assignments = (await get_assignments(token, params))['data']
     if assignments is None:
         return []
     return assignments
@@ -35,9 +35,25 @@ async def get_user(token: str) -> Union[dict, None]:
         return (await do_wk_get(f'https://api.wanikani.com/v2/user', token))['data']
     return await remember_async(key, callback, 60*1)
 
-async def get_count_of_reviews_completed_yesterday(token: str, timezone: str) -> list:
+async def get_assignments(token: str, params: dict = {}, first_page_only=False) -> dict:
+    assignments = await do_wk_get('https://api.wanikani.com/v2/assignments', token, params)
+    response = assignments
+    if not first_page_only:
+        while response['pages']['next_url'] is not None:
+            response = await do_wk_get(response['pages']['next_url'], token)
+            assignments['data'] += response['data']
+    del assignments['pages']
+    return assignments
+
+async def get_count_of_assignments_updated_yesterday(token: str, timezone: str) -> int:
     (start, _) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
-    return (await do_wk_get('https://api.wanikani.com/v2/reviews', token, params={'updated_after': start}))['total_count']
+    params = {
+        'updated_after': start,
+        'started': 'true',
+        'srs_stages': ','.join(['2','3','4','5','6','7','8','9'])
+    }
+
+    return (await get_assignments(token, params, first_page_only=True))['total_count']
 
 async def get_lessons_completed_yesterday(token: str, timezone: str) -> list:
     (start, _) = get_previous_day_for_timezone_start_and_end_formatted(timezone)
@@ -46,11 +62,7 @@ async def get_lessons_completed_yesterday(token: str, timezone: str) -> list:
         'started': 'true'
     }
 
-    response = await do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params)
-    updated_assignments = response['data']
-    while response['pages']['next_url'] is not None:
-        response = await do_wk_get(response['pages']['next_url'], token)
-        updated_assignments += response['data']
+    updated_assignments = (await get_assignments(token, params))['data']
 
     today_start = datetime.now(pytz.timezone(timezone)).replace(hour=0, minute=0, second=0, microsecond=0)
     previous_day_start = today_start - timedelta(days=1)
@@ -72,7 +84,7 @@ async def get_count_of_reviews_available_before_end_of_yesterday(token: str, tim
         'immediately_available_for_review': 1,
         'available_before': end
     }
-    return (await do_wk_get('https://api.wanikani.com/v2/assignments', token, params=params))['total_count']
+    return (await get_assignments(token, params, first_page_only=True))['total_count']
 
 async def get_user_stats(token: str) -> dict:
     user_stats = {}
@@ -82,9 +94,9 @@ async def get_user_stats(token: str) -> dict:
     else:
         user_stats['Level'] = response[-1]['data']['level']
 
-    user_stats['Available reviews'] = await get_number_of_lessons_available_now(token)
+    user_stats['Available reviews'] = await get_number_of_reviews_available_now(token)
 
-    response = await do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_lessons': 1})
+    response = await get_assignments(token, {'immediately_available_for_lessons': 1}, first_page_only=True)
     user_stats['Available lessons'] = response['total_count']
 
     return user_stats
@@ -92,8 +104,8 @@ async def get_user_stats(token: str) -> dict:
 async def get_user_level_progressions(token: str) -> dict:
     return await do_wk_get('https://api.wanikani.com/v2/level_progressions', token)
 
-async def get_number_of_lessons_available_now(token: str) -> int:
-    return (await do_wk_get('https://api.wanikani.com/v2/assignments', token, {'immediately_available_for_review': 1}))['total_count']
+async def get_number_of_reviews_available_now(token: str) -> int:
+    return (await get_assignments(token, {'immediately_available_for_review': 1}, first_page_only=True))['total_count']
 
 async def is_user_on_vacation_mode(token: str) -> bool:
     user = await get_user(token)

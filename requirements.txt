@@ -1,8 +1,8 @@
-discord.py==1.7.3
-psycopg2==2.9.3
-pytz==2021.3
+discord.py==2.2.3
+psycopg2
+pytz
 yoyo-migrations==7.3.2
 requests
-redis==4.4.4
+redis
 python-dateutil
 aiohttp

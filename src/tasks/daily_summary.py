@@ -36,7 +36,6 @@ class DailySummary(AccountabilityTask):
             return
 
         user_name = self.bot.user.name
-        icon_url = self.bot.user.avatar_url
         channel = self.bot.get_channel(int(get_config('channel_id')))
         embed = discord.Embed(title=f'Daily WaniKani Summary', color=0xFF5733)
 

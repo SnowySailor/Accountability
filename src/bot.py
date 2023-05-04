@@ -20,28 +20,37 @@ from src.tasks.daily_summary import DailySummary
 from src.tasks.daily_review_warning import DailyReviewWarning
 from src.tasks.user_level_up_notifier import UserLevelUpNotifier
 
+init_logger()
+
 intents = discord.Intents.default()
 intents.members = True
 intents.guild_messages = True
+intents.message_content = True
 
-init_logger()
+class CustomBot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-bot = commands.Bot(command_prefix=get_config('command_prefix', default = ';'), intents=intents)
+    async def setup_hook(self) -> None:
+        self.prepare_for_startup()
 
-@bot.event
-async def on_ready():
-    run_migrations()
-    init_db()
-    init_redis()
-    init_tasks()
-    logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    logtofile('------')
+    async def on_ready(self):
+        await self.init_tasks()
+        logtofile(f'Logged in as {bot.user} (ID: {bot.user.id})')
+        logtofile('------')
 
-def init_tasks():
-    bot.loop.create_task(CriticalChecks(bot).start())
-    bot.loop.create_task(DailyReviewWarning(bot).start())
-    bot.loop.create_task(DailySummary(bot).start())
-    bot.loop.create_task(UserLevelUpNotifier(bot).start())
+    async def init_tasks(self):
+        self.loop.create_task(CriticalChecks(self).start())
+        self.loop.create_task(DailyReviewWarning(self).start())
+        self.loop.create_task(DailySummary(self).start())
+        self.loop.create_task(UserLevelUpNotifier(self).start())
+
+    def prepare_for_startup(self):
+        run_migrations()
+        init_db()
+        init_redis()
+
+bot = CustomBot(command_prefix=get_config('command_prefix', default = ';'), intents=intents)
 
 @bot.command()
 async def ping(ctx, *msg: str):
@@ -123,11 +132,9 @@ async def show(ctx, *name: str):
             return
         user_name = user.name
         user_id = user.id
-        icon_url = user.avatar_url
     else:
         user_name = ctx.author.name
         user_id = ctx.author.id
-        icon_url = ctx.author.avatar_url
     channel_id = ctx.channel.id
     activities_today = activity.get_activities_for_user_for_today(user_id, channel_id)
 
@@ -136,7 +143,7 @@ async def show(ctx, *name: str):
         description = 'No activities logged today'
 
     embed = discord.Embed(title=f'{user_name}\'s Activities Today', description=description, color=0xFF5733)
-    embed.set_author(name=user_name, icon_url=icon_url)
+    embed.set_author(name=user_name)
     for cat, activity_list in activities_today.items():
         if cat is None:
             cat = 'No Category'

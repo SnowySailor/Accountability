@@ -315,6 +315,16 @@ async def wkstats_error_handler(ctx, error):
     if isinstance(error, commands.errors.MemberNotFound):
         await ctx.send("Invalid user")
 
+@bot.command()
+async def version(ctx):
+    timestamp = ''
+    commit = ''
+    with open('/build-timestamp.txt', 'r') as f:
+        timestamp = f.read().strip()
+    with open('/build-commit.txt', 'r') as f:
+        commit = f.read().strip()
+    await ctx.send('Running commit `' + commit + '` (built `' + timestamp + '`)')
+
 @bot.event
 async def on_command_error(ctx, err):
     err = getattr(err, 'original', err)

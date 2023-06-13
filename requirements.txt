@@ -1,4 +1,4 @@
-discord.py==2.2.3
+discord.py==2.3.0
 psycopg2
 pytz
 yoyo-migrations==7.3.2

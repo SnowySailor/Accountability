@@ -2,7 +2,7 @@ from discord.ext import commands
 
 class General(commands.Cog):
     @commands.command()
-    async def ping(ctx, *msg: str):
+    async def ping(self, ctx, *msg: str):
         resp = ' '.join(msg)
         await ctx.send(resp)
 

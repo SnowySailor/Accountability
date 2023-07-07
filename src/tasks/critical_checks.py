@@ -18,13 +18,22 @@ class CriticalChecks(AccountabilityTask):
         for user in users:
             assignments = await wk_api.get_new_assignments_this_hour(user.token)
             for assignment in assignments:
-                if get_multi_level_value(assignment, 'data', 'srs_stage', default=6) < 5 and get_multi_level_value(assignment, 'data', 'subject_type') in ['radical', 'kanji']:
-                    subject_id = get_multi_level_value(assignment, 'data', 'subject_id')
-                    subject = await wk_api.get_subject(subject_id, user.token)
-                    wk_user = await wk_api.get_user(user.token)
-                    if get_value(subject, 'level') == get_value(wk_user, 'level'):
-                        users_to_notify.append(user.id)
-                        break
+                if get_multi_level_value(assignment, 'data', 'passed_at') is not None:
+                    continue
+
+                if get_multi_level_value(assignment, 'data', 'srs_stage', default=5) > 4:
+                    continue
+
+                if get_multi_level_value(assignment, 'data', 'subject_type') not in ['radical', 'kanji']:
+                    continue
+
+                subject_id = get_multi_level_value(assignment, 'data', 'subject_id')
+                subject = await wk_api.get_subject(subject_id, user.token)
+                wk_user = await wk_api.get_user(user.token)
+                if get_value(subject, 'level') == get_value(wk_user, 'level'):
+                    users_to_notify.append(user.id)
+                    break
+
         if len(users_to_notify) > 0:
             await self.notify_of_new_criticals(users_to_notify)
 

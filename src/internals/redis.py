@@ -15,6 +15,21 @@ def init_redis():
     )
     return pool
 
+def try_init_redis(max_retries=7, delay=300):  
+    for attempt in range(max_retries):
+        try:
+            init_db()
+            print("Redis initialized successfully!")
+            return
+        except Exception as e:
+            print(f"Failed to initialize the Redis on attempt {attempt + 1}: {e}")
+            if attempt + 1 < max_retries:
+                print(f"Waiting for {delay} seconds before retrying...")
+                time.sleep(delay)
+            else:
+                print("Max retries reached. Giving up.")
+                break
+
 def get_pool():
     global pool
     return pool

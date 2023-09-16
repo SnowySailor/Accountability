@@ -4,8 +4,8 @@ import traceback
 
 from src.utils.utils import get_config
 from src.utils.logger import init_logger, logtofile, logtodiscord
-from src.internals.database import init_db, run_migrations
-from src.internals.redis import init_redis
+from src.internals.database import try_init_db, run_migrations
+from src.internals.redis import try_init_redis
 
 from src.tasks.critical_checks import CriticalChecks
 from src.tasks.daily_summary import DailySummary
@@ -52,8 +52,8 @@ class CustomBot(commands.Bot):
 
     def prepare_for_startup(self):
         run_migrations()
-        init_db()
-        init_redis()
+        try_init_db()
+        try_init_redis()
 
 init_logger()
 

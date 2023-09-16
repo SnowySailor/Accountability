@@ -20,6 +20,21 @@ def init_db():
         cursor_factory = RealDictCursor
     )
 
+def try_init_db(max_retries=14, delay=300):  
+    for attempt in range(max_retries):
+        try:
+            init_db()
+            print("Database initialized successfully!")
+            return
+        except Exception as e:
+            print(f"Failed to initialize the database on attempt {attempt + 1}: {e}")
+            if attempt + 1 < max_retries:
+                print(f"Waiting for {delay} seconds before retrying...")
+                time.sleep(delay)
+            else:
+                print("Max retries reached. Giving up.")
+                break
+
 @contextmanager
 def get_conn(key: str = None):
     try:

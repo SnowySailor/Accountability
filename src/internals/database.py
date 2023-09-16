@@ -4,6 +4,7 @@ from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 from yoyo import read_migrations
 from yoyo import get_backend
+import time
 
 from ..utils.utils import get_config
 
@@ -24,7 +25,6 @@ def try_init_db(max_retries=14, delay=300):
     for attempt in range(max_retries):
         try:
             init_db()
-            print("Database initialized successfully!")
             return
         except Exception as e:
             print(f"Failed to initialize the database on attempt {attempt + 1}: {e}")
@@ -33,7 +33,7 @@ def try_init_db(max_retries=14, delay=300):
                 time.sleep(delay)
             else:
                 print("Max retries reached. Giving up.")
-                break
+                exit(1)
 
 @contextmanager
 def get_conn(key: str = None):

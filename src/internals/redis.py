@@ -4,6 +4,7 @@ import datetime
 import pickle
 import time
 
+from src.utils.logger import logtofile
 from ..utils.utils import get_config
 
 pool = None
@@ -16,19 +17,17 @@ def init_redis():
     )
     return pool
 
-def try_init_redis(max_retries=7, delay=300):  
-    for attempt in range(max_retries):
-        try:
-            init_db()
-            return
-        except Exception as e:
-            print(f"Failed to initialize the Redis on attempt {attempt + 1}: {e}")
-            if attempt + 1 < max_retries:
-                print(f"Waiting for {delay} seconds before retrying...")
-                time.sleep(delay)
-            else:
-                print("Max retries reached. Giving up.")
-                exit(1)
+def try_init_redis(max_tries = 5, delay = 60):
+    if max_tries <= 0:
+        logtofile("Max retries reached. Giving up.", 'error')
+        exit(1)
+
+    try:
+        init_redis()
+    except Exception as e:
+        logtofile(f"Failed to initialize Redis: {e}", 'warning')
+        time.sleep(delay)
+        try_init_redis(max_tries - 1, delay)
 
 def get_pool():
     global pool

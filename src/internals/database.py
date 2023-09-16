@@ -6,6 +6,7 @@ from yoyo import read_migrations
 from yoyo import get_backend
 import time
 
+from src.utils.logger import logtofile
 from ..utils.utils import get_config
 
 pool = None
@@ -21,19 +22,17 @@ def init_db():
         cursor_factory = RealDictCursor
     )
 
-def try_init_db(max_retries=14, delay=300):  
-    for attempt in range(max_retries):
-        try:
-            init_db()
-            return
-        except Exception as e:
-            print(f"Failed to initialize the database on attempt {attempt + 1}: {e}")
-            if attempt + 1 < max_retries:
-                print(f"Waiting for {delay} seconds before retrying...")
-                time.sleep(delay)
-            else:
-                print("Max retries reached. Giving up.")
-                exit(1)
+def try_init_db(max_tries = 5, delay = 60):
+    if max_tries <= 0:
+        logtofile("Max retries reached. Giving up.", 'error')
+        exit(1)
+
+    try:
+        init_db()
+    except Exception as e:
+        logtofile(f"Failed to initialize the database: {e}", 'warning')
+        time.sleep(delay)
+        try_init_db(max_tries - 1, delay)
 
 @contextmanager
 def get_conn(key: str = None):
@@ -58,8 +57,17 @@ def get_cursor(key: str = None):
     finally:
         pool.putconn(conn, key)
 
-def run_migrations():
-    backend = get_backend('postgres://' + get_config('database', 'user') + ':' + get_config('database', 'password') + '@' + get_config('database', 'host') + ':' + str(get_config('database', 'port', default=5432)) + '/' + get_config('database', 'database'))
-    migrations = read_migrations('./migrations')
-    with backend.lock():
-        backend.apply_migrations(backend.to_apply(migrations))
+def run_migrations(max_tries = 5, delay = 60):
+    if max_tries <= 0:
+        logtofile("Max retries reached. Giving up.", 'error')
+        exit(1)
+
+    try:
+        backend = get_backend('postgres://' + get_config('database', 'user') + ':' + get_config('database', 'password') + '@' + get_config('database', 'host') + ':' + str(get_config('database', 'port', default=5432)) + '/' + get_config('database', 'database'))
+        migrations = read_migrations('./migrations')
+        with backend.lock():
+            backend.apply_migrations(backend.to_apply(migrations))
+    except Exception as e:
+        logtofile(f"Failed to run database migrations: {e}", 'warning')
+        time.sleep(delay)
+        run_migrations(max_tries - 1, delay)

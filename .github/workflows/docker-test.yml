@@ -1,0 +1,36 @@
+name: Build and Test Docker
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: docker.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # if: github.repository == 'SnowySailor/Accountability'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create .env.postgres file in the config folder
+        run: touch config/.env.postgres
+      - name: Build the Docker image
+        run: docker-compose build --no-cache --force-rm weeb-app
+  test:
+    runs-on: ubuntu-latest
+    # if: github.repository == 'SnowySailor/Accountability'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create .env.postgres file in the config folder
+        run: |
+          echo POSTGRES_USER=dockertestuser > config/.env.postgres
+          echo POSTGRES_PASSWORD=dockertestpassword >> config/.env.postgres
+          echo POSTGRES_DB=dockertestdb >> config/.env.postgres
+      - name: Test the Docker image
+        run: docker-compose up -d

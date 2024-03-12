@@ -1,0 +1,9 @@
+version: '2.3'
+
+services:
+  accountability-dind:
+    container_name: accountability-dind
+    privileged: true
+    build:
+      context: ..
+      dockerfile: docker-in-docker/Dockerfile

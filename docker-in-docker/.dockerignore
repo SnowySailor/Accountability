@@ -1,7 +1,5 @@
 config/config.json
 config/.env.postgres
 *.log
-Dockerfile
-docker-compose.yml
 __pycache__
 db

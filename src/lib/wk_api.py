@@ -3,7 +3,6 @@ import aiohttp
 import asyncio
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
-import requests
 from hashlib import sha256
 from typing import Union
 from urllib.error import HTTPError

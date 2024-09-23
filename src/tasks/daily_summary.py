@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import requests
 from discord.ext import commands
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
@@ -17,18 +18,22 @@ class DailySummary(AccountabilityTask):
         users = user_lib.get_users_with_api_tokens()
         data = {}
         for user in users:
-            if await wk_api.is_user_on_vacation_mode(user.token):
-                continue
+            try:
+                if await wk_api.is_user_on_vacation_mode(user.token):
+                    continue
 
-            if user_lib.is_midnight_in_users_timezone(user.id):
-                reviews = await wk_api.get_count_of_assignments_updated_yesterday(user.token, user.timezone)
-                lessons = await wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
-                pending_reviews = await wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
-                data[user.id] = {
-                    'reviews': reviews,
-                    'lessons': len(lessons),
-                    'pending_reviews': pending_reviews
-                }
+                if user_lib.is_midnight_in_users_timezone(user.id):
+                    reviews = await wk_api.get_count_of_assignments_updated_yesterday(user.token, user.timezone)
+                    lessons = await wk_api.get_lessons_completed_yesterday(user.token, user.timezone)
+                    pending_reviews = await wk_api.get_count_of_reviews_available_before_end_of_yesterday(user.token, user.timezone)
+                    data[user.id] = {
+                        'reviews': reviews,
+                        'lessons': len(lessons),
+                        'pending_reviews': pending_reviews
+                    }
+            except requests.exceptions.RequestException as e:
+                if e.response.status_code == 403:
+                    continue
         await self.send_daily_summary_message(data)
 
     async def send_daily_summary_message(self, data: dict) -> None:

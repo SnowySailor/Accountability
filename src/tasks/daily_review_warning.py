@@ -1,5 +1,5 @@
 import asyncio
-import requests
+import aiohttp
 from discord.ext import commands
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
@@ -25,8 +25,9 @@ class DailyReviewWarning(AccountabilityTask):
                     reviews = await wk_api.get_number_of_reviews_available_now(user.token)
                     if reviews >= get_config('pending_review_disappointed_threshold'):
                         almost_overdue_users.append(user.id)
-            except requests.exceptions.RequestException as e:
-                if e.response.status_code == 403:
+            except aiohttp.ClientResponseError as e:
+                if e.code == 403:
+                    await self.bot.complain_about_expired_key(user.id)
                     continue
         if len(almost_overdue_users) > 0:
             await self.send_almost_overdue_message(almost_overdue_users)

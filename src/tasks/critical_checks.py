@@ -2,7 +2,7 @@ import asyncio
 from discord.ext import commands
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
-import requests
+import aiohttp
 from src.utils.utils import get_config, get_multi_level_value, get_value
 from src.utils.time import get_seconds_until_next_hour
 from src.internals.accountability_task import AccountabilityTask
@@ -35,8 +35,9 @@ class CriticalChecks(AccountabilityTask):
                     if get_value(subject, 'level') == get_value(wk_user, 'level'):
                         users_to_notify.append(user.id)
                         break
-            except requests.exceptions.RequestException as e:
-                if e.response.status_code == 403:
+            except aiohttp.ClientResponseError as e:
+                if e.code == 403:
+                    await self.bot.complain_about_expired_key(user.id)
                     continue
 
         if len(users_to_notify) > 0:

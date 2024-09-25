@@ -1,5 +1,5 @@
 import asyncio
-import requests
+import aiohttp
 from discord.ext import commands
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
@@ -24,8 +24,9 @@ class UserLevelUpNotifier(AccountabilityTask):
                     if unlocked_timestamp > get_start_of_previous_hour_utc():
                         await self.notify_of_level_up(user.id, get_multi_level_value(level, 'data', 'level'))
                         break
-            except requests.exceptions.RequestException as e:
-                if e.response.status_code == 403:
+            except aiohttp.ClientResponseError as e:
+                if e.code == 403:
+                    await self.bot.complain_about_expired_key(user.id)
                     continue
 
     async def notify_of_level_up(self, user_id: int, new_level: int) -> None:

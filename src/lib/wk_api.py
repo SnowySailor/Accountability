@@ -122,12 +122,14 @@ async def do_wk_get(url: str, token: str, params = {}, headers = {}, retries = 2
             async with session.get(url, params=params, raise_for_status=True) as response:
                 return await response.json()
     except aiohttp.ClientResponseError as e:
+        if e.code == 403:
+            raise e
         status_code = e.code
     except Exception as e:
         pass
 
     if retries < 1:
-        raise Exception(f'Failed to get {url} after 3 attempts. Last status code was {status_code}.') from None
+        raise Exception(f'Failed to get {url} after 3 attempts. Last status code was {status_code}.')
     await asyncio.sleep(30) # Wait 30s before trying again
     return await do_wk_get(url, token, params, headers, retries - 1)
 

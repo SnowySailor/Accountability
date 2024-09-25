@@ -50,6 +50,12 @@ class CustomBot(commands.Bot):
         self.loop.create_task(DailySummary(self).start())
         self.loop.create_task(UserLevelUpNotifier(self).start())
 
+    async def complain_about_expired_key(self, user_id):
+        channel = bot.get_channel(int(get_config('channel_id')))
+        user = channel.guild.get_member(user_id)
+        message = f'{user.mention} your API key is invalid, please update or remove it'
+        await channel.send(message)
+
     def prepare_for_startup(self):
         run_migrations()
         try_init_db()

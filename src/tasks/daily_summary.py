@@ -1,6 +1,6 @@
 import asyncio
 import discord
-import requests
+import aiohttp
 from discord.ext import commands
 import src.lib.user as user_lib
 import src.lib.wk_api as wk_api
@@ -31,8 +31,9 @@ class DailySummary(AccountabilityTask):
                         'lessons': len(lessons),
                         'pending_reviews': pending_reviews
                     }
-            except requests.exceptions.RequestException as e:
-                if e.response.status_code == 403:
+            except aiohttp.ClientResponseError as e:
+                if e.code == 403:
+                    await self.bot.complain_about_expired_key(user.id)
                     continue
         await self.send_daily_summary_message(data)
 

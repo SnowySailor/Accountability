@@ -44,4 +44,3 @@ jobs:
           push: true
           tags: snowsailor/test:latest
           labels: ${{ steps.meta.outputs.labels }}
-

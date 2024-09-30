@@ -33,4 +33,4 @@ jobs:
           echo POSTGRES_PASSWORD=dockertestpassword >> config/.env.postgres
           echo POSTGRES_DB=dockertestdb >> config/.env.postgres
       - name: Test the Docker image
-        run: docker-compose up -d
+        run: docker compose up -d
